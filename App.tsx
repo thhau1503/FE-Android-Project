@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 import LoginScreen from "./src/components/login/LoginScreen";
 import ProfileScreen from "./src/components/profile/ProfileScreen";
 import RegisterScreen from "./src/components/register/RegisterScreen";
 import TabNavigator from "./src/screens/TabNavigator";
 import Detail from "./src/components/detail/Detail";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, View, Alert } from "react-native";
 
 const Stack = createStackNavigator();
 
@@ -19,18 +20,41 @@ const App: React.FC = () => {
     const checkToken = async () => {
       try {
         const storedToken = await AsyncStorage.getItem("token");
-        setToken(storedToken);
+        console.log(storedToken);
+        if (storedToken) {
+          const response = await axios.get(
+            "https://be-android-project.onrender.com/api/auth/me",
+            {
+              headers: {
+                Authorization: `Bearer ${storedToken}`,
+              },
+            }
+          );
+          // If the token is valid, set the token state
+          setToken(storedToken);
+        } else {
+          // No token found, start with login screen
+          setToken(null);
+        }
       } catch (error) {
-        console.error("Error fetching token:", error);
+        // If the token is invalid or the request returns 401
+        if (error.response && error.response.status === 401) {
+          Alert.alert(
+            "Session Expired",
+            "Token is not valid. Please log in again."
+          );
+          setToken(null); // Invalid token, redirect to login
+        } else {
+          console.error("Error fetching token or making request:", error);
+        }
       } finally {
-        setIsLoading(false); // Đánh dấu việc kiểm tra token đã hoàn thành
+        setIsLoading(false); // Mark token check as complete
       }
     };
 
     checkToken();
   }, []);
 
-  // Hiển thị ActivityIndicator trong khi đang kiểm tra token
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -42,7 +66,7 @@ const App: React.FC = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={token ? "tab" : "login"} // Nếu có token, chuyển tới 'tab', nếu không thì 'login'
+        initialRouteName={token ? "tab" : "login"} // Redirect based on token validity
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="tab" component={TabNavigator} />

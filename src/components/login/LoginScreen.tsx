@@ -37,7 +37,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleLogin = async () => {
-    // check invalid email and password -> set state login form
     let formData = {
       _email: email,
       _password: password,
@@ -80,29 +79,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    // <View style={styles.container}>
-    //   <Text style={styles.title}>Lohgin</Text>
-    //   <TextInput
-    //     style={styles.input}
-    //     placeholder="Email"
-    //     value={email}
-    //     onChangeText={setEmail}
-    //     keyboardType="email-address"
-    //     autoCapitalize="none"
-    //   />
-    //   <TextInput
-    //     style={styles.input}
-    //     placeholder="Password"
-    //     value={password}
-    //     onChangeText={setPassword}
-    //     secureTextEntry
-    //   />
-    //   <Button
-    //     title={loading ? "Logging in..." : "Login"}
-    //     onPress={handleLogin}
-    //     disabled={loading}
-    //   />
-    // </View>
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor={"#fff"} barStyle={"dark-content"}></StatusBar>
       <View style={styles.title}>
@@ -230,8 +206,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
       </View>
-      {/* <Text> Email: {email}</Text>
-    <Text> Password: {password}</Text> */}
       <View>
         <Image
           source={require("../../../assets/images/Subtract.png")}
@@ -243,23 +217,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  // container: {
-  //   flex: 1,
-  //   justifyContent: "center",
-  //   padding: 16,
-  // },
-  // title: {
-  //   fontSize: 24,
-  //   marginBottom: 16,
-  //   textAlign: "center",
-  // },
-  // input: {
-  //   height: 40,
-  //   borderColor: "#ccc",
-  //   borderWidth: 1,
-  //   marginBottom: 12,
-  //   paddingHorizontal: 8,
-  // },
   container: {
     flex: 1,
     backgroundColor: "#fff",
