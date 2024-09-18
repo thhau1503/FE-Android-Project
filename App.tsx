@@ -9,6 +9,7 @@ import RegisterScreen from "./src/components/register/RegisterScreen";
 import TabNavigator from "./src/screens/TabNavigator";
 import Detail from "./src/components/detail/Detail";
 import { ActivityIndicator, View, Alert } from "react-native";
+import Notification from "./src/components/notify/Notificaion";
 
 const Stack = createStackNavigator();
 
@@ -20,7 +21,7 @@ const App: React.FC = () => {
     const checkToken = async () => {
       try {
         const storedToken = await AsyncStorage.getItem("token");
-        console.log(storedToken);
+        console.log("token:", storedToken);
         if (storedToken) {
           const response = await axios.get(
             "https://be-android-project.onrender.com/api/auth/me",
@@ -73,7 +74,8 @@ const App: React.FC = () => {
         <Stack.Screen name="login" component={LoginScreen} />
         <Stack.Screen name="register" component={RegisterScreen} />
         <Stack.Screen name="profile" component={ProfileScreen} />
-        <Stack.Screen name="DetailItem" component={Detail} />
+        <Stack.Screen name="detailItem" component={Detail} />
+        <Stack.Screen name="notification" component={Notification} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -16,7 +16,7 @@ const ListCategory = () => {
               }}
             />
             <View style={styles.cateOver}>
-              <Text style={{ textAlign: "center" }}>Chè bưởi</Text>
+              <Text style={{ textAlign: "center" }}>Căn hộ nữ</Text>
             </View>
           </View>
           <View style={styles.item}>
@@ -27,7 +27,7 @@ const ListCategory = () => {
               }}
             />
             <View style={styles.cateOver}>
-              <Text style={{ textAlign: "center" }}>Chè xanh</Text>
+              <Text style={{ textAlign: "center" }}>Nhà trọ</Text>
             </View>
           </View>
           <View style={styles.item}>
@@ -38,7 +38,7 @@ const ListCategory = () => {
               }}
             />
             <View style={styles.cateOver}>
-              <Text style={{ textAlign: "center" }}>Chè bưởi</Text>
+              <Text style={{ textAlign: "center" }}>Căn hộ </Text>
             </View>
           </View>
           <View style={styles.item}>
@@ -49,7 +49,7 @@ const ListCategory = () => {
               }}
             />
             <View style={styles.cateOver}>
-              <Text style={{ textAlign: "center" }}>Chè bưởi</Text>
+              <Text style={{ textAlign: "center" }}>Mini house</Text>
             </View>
           </View>
           <View style={styles.item}>
@@ -60,7 +60,7 @@ const ListCategory = () => {
               }}
             />
             <View style={styles.cateOver}>
-              <Text style={{ textAlign: "center" }}>Chè bưởi</Text>
+              <Text style={{ textAlign: "center" }}>Kí túc xá</Text>
             </View>
           </View>
         </ScrollView>
