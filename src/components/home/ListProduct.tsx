@@ -7,6 +7,7 @@ import {
   AccessibilityInfo,
   ActivityIndicator,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -65,7 +66,7 @@ const ListProduct: React.FC = () => {
               <View style={styles.item}>
                 <TouchableOpacity
                   onPress={() => {
-                    navigation.navigate("DetailItem", { item });
+                    navigation.navigate("detailItem", { item });
                   }}
                 >
                   <Image
@@ -130,11 +131,6 @@ const ListProduct: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
   photoItem: {
     width: "100%",
     height: 150,
