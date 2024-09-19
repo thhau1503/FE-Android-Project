@@ -17,6 +17,14 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Waiting from "./Waiting";
 import ListCategory from "./ListCategory";
 import NoteAddMore from "./NoteAddMore";
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  user_role: string;
+  phone: string;
+  address: string;
+}
 
 const HomeScreen: React.FC = ({ navigation }: any) => {
   const [user, setUser] = useState<User | null>(null);
