@@ -80,7 +80,7 @@ const Header = ({ navigation }: any) => {
           </View>
           <TouchableOpacity
             onPress={() => {
-              navigationUse.navigate("notification");
+              navigation.navigate("notification");
             }}
           >
             <MaterialCommunityIcons name="bell" size={30} color="#342061" />
