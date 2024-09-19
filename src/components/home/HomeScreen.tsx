@@ -196,20 +196,29 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             >
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {topPosts.map((item, index) => (
-                  <View key={item._id} style={styles.item}>
-                    <Image
-                      style={{
-                        width: 100,
-                        height: 100,
-                        borderTopRightRadius: 10,
-                        borderTopLeftRadius: 10,
+                  <View
+                    key={item._id}
+                    style={{ marginRight: 10, borderRadius: 10, padding: 5 }}
+                  >
+                    <TouchableOpacity
+                      onPress={() => {
+                        navigation.navigate("detailItem", { item });
                       }}
-                      source={{
-                        uri:
-                          item.image_url ||
-                          "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
-                      }}
-                    />
+                    >
+                      <Image
+                        style={{
+                          width: 240,
+                          height: 240,
+                          borderTopRightRadius: 10,
+                          borderTopLeftRadius: 10,
+                        }}
+                        source={{
+                          uri:
+                            item.image_url ||
+                            "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
+                        }}
+                      />
+                    </TouchableOpacity>
                     <View
                       style={{
                         backgroundColor: "rgb(210, 210, 210)",
