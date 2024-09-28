@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Text, View } from "react-native";
 
 type NoteAddMoreProps = {
-  tile: string;
+  title: string;
+  typeSeeMore: string;
 };
 
-const NoteAddMore = ({ tile }: NoteAddMoreProps) => {
+const NoteAddMore = ({ title, typeSeeMore }: NoteAddMoreProps) => {
+  const [titleVietnamese, setTitleVietnamese] = useState("");
   return (
     <View>
       <View
@@ -15,8 +18,8 @@ const NoteAddMore = ({ tile }: NoteAddMoreProps) => {
           paddingVertical: 15,
         }}
       >
-        <Text style={{ color: "red", fontWeight: "bold" }}>{tile}</Text>
-        <Text>See More</Text>
+        <Text style={{ color: "red", fontWeight: "bold" }}>{title}</Text>
+        <Text>Xem thêm</Text>
       </View>
     </View>
   );

@@ -52,7 +52,7 @@ const ListProduct: React.FC = () => {
 
   return (
     <>
-      <NoteAddMore tile="Products" />
+      <NoteAddMore title="Sản phẩm" typeSeeMore="product" />
       <View style={{ backgroundColor: "rgba(240, 240, 240,0.2)" }}>
         {isLoading ? (
           <Waiting />
