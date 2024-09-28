@@ -17,6 +17,14 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Waiting from "./Waiting";
 import ListCategory from "./ListCategory";
 import NoteAddMore from "./NoteAddMore";
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  user_role: string;
+  phone: string;
+  address: string;
+}
 
 const HomeScreen: React.FC = ({ navigation }: any) => {
   const [user, setUser] = useState<User | null>(null);
@@ -25,6 +33,8 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [typeSeeMore, setTypeSeeMore] = useState("");
+  const [topPosts, setTopPosts] = useState([]);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -73,6 +83,11 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           }
         );
         setPosts(response.data);
+        const sortedPosts = response.data.sort(
+          (a: any, b: any) =>
+            new Date(b.create_at).getTime() - new Date(a.create_at).getTime()
+        );
+        setTopPosts(sortedPosts.slice(0, 6));
       } else {
         navigation.navigate("login");
       }
@@ -169,7 +184,57 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           </View>
 
           <ListCategory />
-          <NoteAddMore tile="Products" />
+
+          <>
+            <NoteAddMore title="Sản phẩm tiểu biểu" typeSeeMore="product" />
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                paddingBottom: 10,
+              }}
+            >
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {topPosts.map((item, index) => (
+                  <View
+                    key={item._id}
+                    style={{ marginRight: 10, borderRadius: 10, padding: 5 }}
+                  >
+                    <TouchableOpacity
+                      onPress={() => {
+                        navigation.navigate("detailItem", { item });
+                      }}
+                    >
+                      <Image
+                        style={{
+                          width: 240,
+                          height: 240,
+                          borderTopRightRadius: 10,
+                          borderTopLeftRadius: 10,
+                        }}
+                        source={{
+                          uri:
+                            item.image_url ||
+                            "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
+                        }}
+                      />
+                    </TouchableOpacity>
+                    <View
+                      style={{
+                        backgroundColor: "rgb(210, 210, 210)",
+                        borderBottomLeftRadius: 10,
+                        borderBottomRightRadius: 10,
+                      }}
+                    >
+                      <Text style={{ textAlign: "center" }}>{item.title}</Text>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          </>
+
+          <NoteAddMore title="Sản phẩm" typeSeeMore="product" />
           <View style={{ backgroundColor: "rgba(240, 240, 240,0.2)" }}>
             {isLoading ? (
               <Waiting />

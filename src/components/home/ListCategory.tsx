@@ -5,7 +5,7 @@ import NoteAddMore from "./NoteAddMore";
 const ListCategory = () => {
   return (
     <>
-      <NoteAddMore tile="Category" />
+      <NoteAddMore title="Danh mục" typeSeeMore="category" />
       <View style={styles.container}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.item}>
