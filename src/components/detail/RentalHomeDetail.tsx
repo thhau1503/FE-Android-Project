@@ -37,7 +37,7 @@ interface User {
 
 // Kiểu dữ liệu của các props mà component nhận vào
 interface RentalHomeDetailProps {
-  navigation: any; // Bạn có thể điều chỉnh lại kiểu này tùy vào cấu trúc của `navigation`
+  navigation: any; 
 }
 
 const RentalHomeDetail: React.FC<RentalHomeDetailProps> = ({ navigation }) => {
@@ -308,19 +308,19 @@ const style = StyleSheet.create({
     backgroundColor: COLORS.green,
     borderRadius: 10,
     paddingHorizontal: 20,
-    width: width * 0.5, // Nút "Đặt Phòng" dài 1/2 màn hình
+    width: width * 0.5, 
   },
   circleButton: {
     height: 50,
     width: 50,
-    borderRadius: 25, // Hình tròn
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: COLORS.light,
     marginLeft: 10,
   },
   buttonContainer: {
-    flexDirection: 'row', // Xếp nút theo chiều ngang
+    flexDirection: 'row', 
     justifyContent: 'space-between',
     marginTop: 20,
     alignItems: 'center',
