@@ -3,7 +3,6 @@ import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Image } fro
 import axios from "axios";
 
 const OtpVerificationScreen = ({ route, navigation }: any) => {
-  // Nhận email từ màn hình đăng ký qua route.params
   const { email } = route.params;
   const [otp, setOtp] = useState("");
 
@@ -11,14 +10,11 @@ const OtpVerificationScreen = ({ route, navigation }: any) => {
     try {
       // Gọi API để xác thực OTP
       const response = await axios.post(
-        "https://be-android-project.onrender.com/api/auth/verify-otp", // Thay thế bằng API OTP thực tế của bạn
-        { email, otp }
+        "https://be-android-project.onrender.com/api/auth/verify-otp",
       );
 
       if (response.status === 200) {
-        // Nếu OTP xác thực thành công
         Alert.alert("Success", "OTP verified successfully!");
-        // Điều hướng về màn hình đăng nhập sau khi xác thực thành công
         navigation.navigate("login");
       } else {
         // Nếu OTP không hợp lệ
@@ -32,7 +28,7 @@ const OtpVerificationScreen = ({ route, navigation }: any) => {
 
   return (
     <View style={styles.container}>
-      {/* Hình ảnh ở giữa màn hình sử dụng URL từ Google */}
+
       <Image
         source={{
           uri: 'https://th.bing.com/th/id/OIP.0RVowCUd7UR4wQ3MKxZmnAHaE8?w=272&h=180&c=7&r=0&o=5&dpr=1.1&pid=1.7', 
@@ -74,7 +70,7 @@ const styles = StyleSheet.create({
   image: {
     width: 150,
     height: 150,
-    marginBottom: 20, // Cách tiêu đề khoảng 20px
+    marginBottom: 20,
   },
   title: {
     fontSize: 28,

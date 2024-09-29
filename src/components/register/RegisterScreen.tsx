@@ -109,15 +109,13 @@ const RegisterScreen = ({ navigation }: any) => {
       address: formData._address,
     };
     try {
-      // Make the API call using axios
       const response = await axios.post(
         "https://be-android-project.onrender.com/api/auth/register",
         apiData
       );
-      // Check the response
       if (response.status === 200 || response.status === 201) {
         Alert.alert("Success", "Register successful! Redirecting to OTP screen...");
-        // Navigate to the login screen after successful registration
+  
         navigation.navigate("otpVerification", { email: email });
       }
     } catch (error) {
