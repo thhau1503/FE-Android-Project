@@ -116,9 +116,9 @@ const RegisterScreen = ({ navigation }: any) => {
       );
       // Check the response
       if (response.status === 200 || response.status === 201) {
-        Alert.alert("Success", "Register a new user successful!");
+        Alert.alert("Success", "Register successful! Redirecting to OTP screen...");
         // Navigate to the login screen after successful registration
-        navigation.navigate("login");
+        navigation.navigate("otpVerification", { email: email });
       }
     } catch (error) {
       // Handle errors
