@@ -40,7 +40,7 @@ interface RentalHomeDetailProps {
   navigation: any; 
 }
 
-const Detail: React.FC<RentalHomeDetailProps> = ({ navigation }) => {
+const RentalHomeDetail: React.FC<RentalHomeDetailProps> = ({ navigation }) => {
   const [comment, setComment] = useState<string>('');
   const [comments, setComments] = useState<User[]>([
     { id: '1', user: 'Người dùng A', text: 'Trọ sạch sẽ, giá hợp lý học sinh, sinh viên.' },
@@ -363,4 +363,4 @@ const style = StyleSheet.create({
   },
 });
 
-export default Detail;
+export default RentalHomeDetail;
