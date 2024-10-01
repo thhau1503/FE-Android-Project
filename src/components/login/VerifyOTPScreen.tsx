@@ -28,11 +28,11 @@ const VerifyOTPScreen = ({ route, navigation }) => {
 
       if (response.ok) {
         Alert.alert('Mật khẩu đã được đặt lại thành công');
-        // Chuyển hướng sang màn hình đăng nhập
-        navigation.navigate('Login');
+        navigation.navigate('login');  // Chuyển hướng sang màn hình đăng nhập
       } else {
         Alert.alert('Lỗi', data.msg || 'OTP không hợp lệ.');
       }
+      
     } catch (err) {
       console.error(err);
       Alert.alert('Lỗi', 'Đã có lỗi xảy ra.');
