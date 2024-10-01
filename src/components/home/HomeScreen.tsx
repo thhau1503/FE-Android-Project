@@ -17,6 +17,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Waiting from "./Waiting";
 import ListCategory from "./ListCategory";
 import NoteAddMore from "./NoteAddMore";
+
 interface User {
   id: string;
   username: string;
@@ -248,7 +249,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                   <View style={styles.item}>
                     <TouchableOpacity
                       onPress={() => {
-                        navigation.navigate("detailItem", { item });
+                        navigation.navigate("detailItem", { postId: item._id });
                       }}
                     >
                       <Image
@@ -290,7 +291,9 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                           justifyContent: "space-between",
                         }}
                       >
-                        <Text style={{ color: "#e21f6d" }}>đ{item.price}</Text>
+                        <Text style={{ color: "#e21f6d" }}>
+                          đ{item.price}
+                        </Text>
                         <Text>Selled: 20</Text>
                       </View>
                     </View>

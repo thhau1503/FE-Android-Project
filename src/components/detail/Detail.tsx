@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ImageBackground,
   SafeAreaView,
@@ -11,8 +11,10 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import axios from 'axios';
 
 const { width } = Dimensions.get('screen');
 
@@ -28,21 +30,52 @@ const COLORS = {
   green: '#4CAF50',
 };
 
-// Định nghĩa kiểu User
-interface User {
-  id: string;
-  user: string;
-  text: string;
+// Định nghĩa kiểu dữ liệu bài viết
+interface Post {
+  title: string;
+  description: string;
+  price: number;
+  location: {
+    address: string;
+    city: string;
+    district: string;
+    ward: string;
+    geoLocation: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  amenities: {
+    wifi: boolean;
+    airConditioner: boolean;
+    heater: boolean;
+    kitchen: boolean;
+    parking: boolean;
+  };
+  images: string[];
+  landlord: string;
+  roomType: string;
+  size: number;
 }
 
 // Kiểu dữ liệu của các props mà component nhận vào
 interface RentalHomeDetailProps {
-  navigation: any; 
+  navigation: any;
+  route: any; // Route để lấy params từ màn hình trước
 }
 
-const Detail: React.FC<RentalHomeDetailProps> = ({ navigation }) => {
+const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
+  const { postId } = route.params; // Lấy ID bài viết từ params
+  if (!postId) {
+    console.error("postId is undefined");
+    return <Text>Lỗi: postId không hợp lệ</Text>;
+  }
+
+  const [house, setHouse] = useState<Post | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [comment, setComment] = useState<string>('');
-  const [comments, setComments] = useState<User[]>([
+  const [comments, setComments] = useState([
     { id: '1', user: 'Người dùng A', text: 'Trọ sạch sẽ, giá hợp lý học sinh, sinh viên.' },
     { id: '2', user: 'Người dùng B', text: 'Giá tốt, gần trường học.' },
   ]);
@@ -54,76 +87,84 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation }) => {
     }
   };
 
-  // Dữ liệu ảnh trực tiếp từ URL
-  const house = {
-    id: '1',
-    title: 'Phòng Trọ Dành Cho Sinh Viên',
-    location: 'Gần bách hóa xanh, Gần Chợ, Trường học',
-    price: '2500000VND',
-    image: { uri: 'https://th.bing.com/th/id/OIP.DTNA5m_KQk-kpDu7fg-eeAHaEW?w=298&h=180&c=7&r=0&o=5&pid=1.7' }, // Sử dụng URL cho ảnh chính
-    details:
-      'Tòa nhà thang máy, hầm xe siêu rộng, camera an ninh, khu dân trí cao',
-    amenities: ['Gần bách hóa xanh', 'Gần Chợ, Trường học'], // Thêm các tiện ích ở đây
-    additionalDetails: [
-      'Nội thất: máy lạnh, tủ quần áo, tủ lạnh, kệ bếp, máy nóng lạnh',
-      'Điện 3k5/kwh',
-      'Nước 100k/người',
-      'Chỗ để xe free 2 xe',
-      'Dịch vụ vệ sinh và dịch vụ khác',
-    ],
-    interiors: [
-      { uri: 'https://th.bing.com/th/id/OIP.DTNA5m_KQk-kpDu7fg-eeAHaEW?w=298&h=180&c=7&r=0&o=5&pid=1.7' }, // Sử dụng URL cho ảnh nội thất
-      { uri: 'https://th.bing.com/th/id/OIP.DTNA5m_KQk-kpDu7fg-eeAHaEW?w=298&h=180&c=7&r=0&o=5&pid=1.7' },
-      { uri: 'https://th.bing.com/th/id/OIP.DTNA5m_KQk-kpDu7fg-eeAHaEW?w=298&h=180&c=7&r=0&o=5&pid=1.7' },
-    ],
-  };
+  useEffect(() => {
+    const fetchPostDetails = async () => {
+      try {
+        const response = await axios.get(`https://be-android-project.onrender.com/api/post/${postId}`);
+        setHouse(response.data);
+        setLoading(false);
+      } catch (error) {
+        setError('Lỗi khi lấy dữ liệu bài viết.');
+        setLoading(false);
+      }
+    };
 
-  const InteriorCard: React.FC<{ interior: { uri: string } }> = ({ interior }) => {
-    return <Image source={interior} style={style.interiorImage} />;
+    fetchPostDetails();
+  }, [postId]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={COLORS.blue} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>{error}</Text>
+      </View>
+    );
+  }
+
+  const InteriorCard: React.FC<{ uri: string }> = ({ uri }) => {
+    return <Image source={{ uri }} style={style.interiorImage} />;
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* House image */}
+        {house && (
+          <View style={style.backgroundImageContainer}>
+            <ImageBackground style={style.backgroundImage} source={{ uri: house.images[0] }}>
+              <View style={style.header}>
+                <View style={style.headerBtn}>
+                  <Icon
+                    name="arrow-back-ios"
+                    size={20}
+                    onPress={() => navigation.goBack()}
+                  />
+                </View>
+                <View style={style.headerBtn}>
+                  <Icon name="favorite" size={20} color={COLORS.red} />
+                </View>
+              </View>
+            </ImageBackground>
 
-        <View style={style.backgroundImageContainer}>
-          <ImageBackground style={style.backgroundImage} source={house.image}>
-            <View style={style.header}>
-              <View style={style.headerBtn}>
-                <Icon
-                  name="arrow-back-ios"
-                  size={20}
-                  onPress={() => navigation.goBack()}
-                />
-              </View>
-              <View style={style.headerBtn}>
-                <Icon name="favorite" size={20} color={COLORS.red} />
-              </View>
+            {/* Virtual Tag View */}
+            <View style={style.virtualTag}>
+              <Text style={{ color: COLORS.white }}>Virtual tour</Text>
             </View>
-          </ImageBackground>
-
-          {/* Virtual Tag View */}
-          <View style={style.virtualTag}>
-            <Text style={{ color: COLORS.white }}>Virtual tour</Text>
           </View>
-        </View>
+        )}
 
         <View style={style.detailsContainer}>
           {/* Tên và giá */}
           <View style={{ marginTop: 10 }}>
-            <Text style={style.houseTitle}>{house.title}</Text>
-            <Text style={style.price}>Giá: {house.price}</Text>
+            <Text style={style.houseTitle}>{house?.title}</Text>
+            <Text style={style.price}>Giá: {house?.price} VND</Text>
           </View>
 
           {/* Danh sách ảnh nội thất */}
           <View style={{ marginTop: 20 }}>
             <FlatList
-              data={house.interiors}
+              data={house?.images}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(_, index) => index.toString()}
-              renderItem={({ item }) => <InteriorCard interior={item} />}
+              renderItem={({ item }) => <InteriorCard uri={item} />}
               contentContainerStyle={{ paddingHorizontal: 20 }}
             />
           </View>
@@ -132,9 +173,9 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation }) => {
           <View style={style.amenitiesContainer}>
             <Text style={style.amenitiesTitle}>Tiện ích</Text>
             <View style={style.amenitiesList}>
-              {house.amenities.map((amenity, index) => (
+              {house?.amenities && Object.keys(house.amenities).map((key, index) => (
                 <Text key={index} style={style.amenityItem}>
-                  {amenity}
+                  {key}
                 </Text>
               ))}
             </View>
@@ -143,14 +184,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation }) => {
           {/* Thông tin chi tiết */}
           <View style={style.additionalDetailsContainer}>
             <Text style={style.additionalDetailsTitle}>Thông Tin Chi Tiết</Text>
-            <View>
-              {house.additionalDetails.map((detail, index) => (
-                <View key={index} style={style.detailItem}>
-                  <Icon name="check" size={16} color={COLORS.blue} />
-                  <Text style={style.detailText}>{detail}</Text>
-                </View>
-              ))}
-            </View>
+            <Text style={style.detailText}>{house?.description}</Text>
           </View>
 
           {/* Nút đặt phòng và các nút khác */}
@@ -276,11 +310,6 @@ const style = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.dark,
   },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 5,
-  },
   detailText: {
     marginLeft: 5,
     color: COLORS.grey,
@@ -291,15 +320,11 @@ const style = StyleSheet.create({
     marginRight: 10,
     borderRadius: 10,
   },
-  footer: {
-    height: 70,
-    backgroundColor: COLORS.light,
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    alignItems: 'center',
+  buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 10,
+    marginTop: 20,
+    alignItems: 'center',
   },
   bookNowBtn: {
     height: 50,
@@ -308,7 +333,7 @@ const style = StyleSheet.create({
     backgroundColor: COLORS.green,
     borderRadius: 10,
     paddingHorizontal: 20,
-    width: width * 0.5, 
+    width: width * 0.5,
   },
   circleButton: {
     height: 50,
@@ -318,12 +343,6 @@ const style = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.light,
     marginLeft: 10,
-  },
-  buttonContainer: {
-    flexDirection: 'row', 
-    justifyContent: 'space-between',
-    marginTop: 20,
-    alignItems: 'center',
   },
   commentSection: {
     flexDirection: 'row',
