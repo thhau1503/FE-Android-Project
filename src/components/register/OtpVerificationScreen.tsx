@@ -1,6 +1,15 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, Image } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+  Image,
+} from "react-native";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const OtpVerificationScreen = ({ route, navigation }: any) => {
   const { email } = route.params;
@@ -8,14 +17,22 @@ const OtpVerificationScreen = ({ route, navigation }: any) => {
 
   const handleOtpVerification = async () => {
     try {
+      let apiData = {
+        email: email,
+        otp: otp,
+      };
+
       // Gọi API để xác thực OTP
       const response = await axios.post(
         "https://be-android-project.onrender.com/api/auth/verify-otp",
+        apiData
       );
 
       if (response.status === 200) {
         Alert.alert("Success", "OTP verified successfully!");
-        navigation.navigate("login");
+        const { token } = response.data;
+        await AsyncStorage.setItem("token", token);
+        navigation.navigate("tab");
       } else {
         // Nếu OTP không hợp lệ
         Alert.alert("Failed", "Invalid OTP, please try again.");
@@ -28,17 +45,18 @@ const OtpVerificationScreen = ({ route, navigation }: any) => {
 
   return (
     <View style={styles.container}>
-
       <Image
         source={{
-          uri: 'https://th.bing.com/th/id/OIP.0RVowCUd7UR4wQ3MKxZmnAHaE8?w=272&h=180&c=7&r=0&o=5&dpr=1.1&pid=1.7', 
+          uri: "https://th.bing.com/th/id/OIP.0RVowCUd7UR4wQ3MKxZmnAHaE8?w=272&h=180&c=7&r=0&o=5&dpr=1.1&pid=1.7",
         }}
         style={styles.image}
       />
 
       <Text style={styles.title}>OTP Verification</Text>
-      <Text style={styles.subtitle}>Enter the OTP sent to your mobile number</Text>
-      
+      <Text style={styles.subtitle}>
+        Enter the OTP sent to your mobile number
+      </Text>
+
       <TextInput
         placeholder="Enter OTP"
         style={styles.input}
@@ -52,7 +70,7 @@ const OtpVerificationScreen = ({ route, navigation }: any) => {
       </TouchableOpacity>
 
       <Text style={styles.resendText}>Didn't receive OTP?</Text>
-      <TouchableOpacity onPress={() => Alert.alert('Resend OTP')}>
+      <TouchableOpacity onPress={() => Alert.alert("Resend OTP")}>
         <Text style={styles.resendButton}>RESEND OTP</Text>
       </TouchableOpacity>
     </View>
@@ -62,9 +80,9 @@ const OtpVerificationScreen = ({ route, navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f2f2f2',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#f2f2f2",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   image: {
@@ -74,49 +92,49 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
-    color: '#333',
+    color: "#333",
   },
   subtitle: {
     fontSize: 16,
-    color: '#777',
+    color: "#777",
     marginBottom: 30,
-    textAlign: 'center',
+    textAlign: "center",
   },
   input: {
     height: 50,
-    width: '80%',
-    borderColor: '#333',
+    width: "80%",
+    borderColor: "#333",
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 15,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     fontSize: 18,
-    textAlign: 'center',
+    textAlign: "center",
     letterSpacing: 10,
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#007bff',
+    backgroundColor: "#007bff",
     paddingVertical: 15,
-    width: '80%',
+    width: "80%",
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 15,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 16,
   },
   resendText: {
-    color: '#777',
+    color: "#777",
     fontSize: 14,
   },
   resendButton: {
-    color: '#007bff',
-    fontWeight: 'bold',
+    color: "#007bff",
+    fontWeight: "bold",
     fontSize: 16,
     marginTop: 10,
   },
