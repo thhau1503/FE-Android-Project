@@ -6,10 +6,13 @@ import axios from "axios";
 import LoginScreen from "./src/components/login/LoginScreen";
 import ProfileScreen from "./src/components/profile/ProfileScreen";
 import RegisterScreen from "./src/components/register/RegisterScreen";
+import OtpVerificationScreen from "./src/components/register/OtpVerificationScreen"; // Màn hình OTP
 import TabNavigator from "./src/screens/TabNavigator";
 import Detail from "./src/components/detail/Detail";
 import { ActivityIndicator, View, Alert } from "react-native";
 import Notification from "./src/components/notify/Notificaion";
+import ForgotPasswordScreen from "./src/components/login/ForgotPasswordScreen";
+import VerifyOTPScreen from './src/components/login/VerifyOTPScreen';
 
 const Stack = createStackNavigator();
 
@@ -31,25 +34,25 @@ const App: React.FC = () => {
               },
             }
           );
-          // If the token is valid, set the token state
+          // Nếu token hợp lệ, lưu token vào state
           setToken(storedToken);
         } else {
-          // No token found, start with login screen
+          // Nếu không có token, điều hướng về màn hình đăng nhập
           setToken(null);
         }
       } catch (error) {
-        // If the token is invalid or the request returns 401
+        // Nếu token không hợp lệ hoặc có lỗi, chuyển về đăng nhập
         if (error.response && error.response.status === 401) {
           Alert.alert(
             "Session Expired",
             "Token is not valid. Please log in again."
           );
-          setToken(null); // Invalid token, redirect to login
+          setToken(null); // Token không hợp lệ, chuyển hướng về đăng nhập
         } else {
           console.error("Error fetching token or making request:", error);
         }
       } finally {
-        setIsLoading(false); // Mark token check as complete
+        setIsLoading(false); // Hoàn thành việc kiểm tra token
       }
     };
 
@@ -67,13 +70,16 @@ const App: React.FC = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={token ? "tab" : "login"} // Redirect based on token validity
+        initialRouteName={token ? "tab" : "login"} // Điều hướng dựa vào trạng thái của token
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="tab" component={TabNavigator} />
         <Stack.Screen name="login" component={LoginScreen} />
         <Stack.Screen name="register" component={RegisterScreen} />
+        <Stack.Screen name="otpVerification" component={OtpVerificationScreen} />
+        <Stack.Screen name="VerifyOTP" component={VerifyOTPScreen} /> 
         <Stack.Screen name="profile" component={ProfileScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="detailItem" component={Detail} />
         <Stack.Screen name="notification" component={Notification} />
       </Stack.Navigator>
