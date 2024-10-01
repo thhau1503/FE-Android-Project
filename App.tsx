@@ -11,7 +11,7 @@ import TabNavigator from "./src/screens/TabNavigator";
 import Detail from "./src/components/detail/Detail";
 import { ActivityIndicator, View, Alert } from "react-native";
 import Notification from "./src/components/notify/Notificaion";
-
+import ForgotPasswordScreen from "./src/components/login/ForgotPasswordScreen";
 const Stack = createStackNavigator();
 
 const App: React.FC = () => {
@@ -76,6 +76,7 @@ const App: React.FC = () => {
         <Stack.Screen name="register" component={RegisterScreen} />
         <Stack.Screen name="otpVerification" component={OtpVerificationScreen} />
         <Stack.Screen name="profile" component={ProfileScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="detailItem" component={Detail} />
         <Stack.Screen name="notification" component={Notification} />
       </Stack.Navigator>
