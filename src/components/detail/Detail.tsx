@@ -144,23 +144,16 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
               data={house?.images} // Dữ liệu là danh sách ảnh của căn hộ
               keyExtractor={(_, index) => index.toString()}
               renderItem={({ item }) => (
-                <ImageBackground
-                  style={style.backgroundImage}
-                  source={{ uri: item }}
-                >
+                <ImageBackground style={style.backgroundImage} source={{ uri: item }}>
                   <View style={style.header}>
                     <View style={style.headerBtn}>
-                      <Icon
-                        name="arrow-back-ios"
-                        size={20}
-                        onPress={() => navigation.goBack()}
-                      />
+                      <Icon name="arrow-back-ios" size={20} onPress={() => navigation.goBack()} />
                     </View>
                   </View>
                 </ImageBackground>
               )}
             />
-
+  
             {/* Icon và các chức năng */}
             <View style={style.iconContainer}>
               <TouchableOpacity style={style.iconItem}>
@@ -182,10 +175,10 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
             </View>
           </View>
         )}
-
+  
         {/* Đường kẻ ngang */}
         <View style={style.separator}></View>
-
+  
         {/* Container cho thông tin chi tiết */}
         <View style={style.detailsContainer}>
           {/* Ngôi sao và tiêu đề trọ */}
@@ -197,18 +190,17 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
             </View>
             <Text style={style.houseTitle}>{house?.title}</Text>
           </View>
-
+  
           {/* Địa chỉ */}
           <View style={style.addressContainer}>
             <Icon name="location-pin" size={18} color="gray" />
             <View style={style.addressTextContainer}>
               <Text style={style.address}>
-                {house?.location.address}, {house?.location.ward},{" "}
-                {house?.location.district}, {house?.location.city}
+                {house?.location.address}, {house?.location.ward}, {house?.location.district}, {house?.location.city}
               </Text>
             </View>
           </View>
-
+  
           {/* Giá, diện tích, và thời gian */}
           <View style={style.additionalInfoContainer}>
             <View style={style.infoItem}>
@@ -227,9 +219,8 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
         </View>
         {/* Đường kẻ ngang */}
         <View style={style.separator}></View>
-
-        {/* Thêm thông tin chủ nhà trọ */}
-        <View style={style.ownerContainer}>
+          {/* Thêm thông tin chủ nhà trọ */}
+          <View style={style.ownerContainer}>
           <Image
             source={{
               uri: "https://th.bing.com/th/id/OIP.U0D5JdoPkQMi4jhiriSVsgHaHa?w=199&h=200&c=7&r=0&o=5&dpr=1.1&pid=1.7",
@@ -237,7 +228,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
             style={style.ownerAvatar}
           />
           <View style={style.ownerInfo}>
-            <Text style={style.ownerName}>Nhà Trọ Ngõ Sen</Text>
+            <Text style={style.ownerName}>Nhà Trọ</Text>
             <Text style={style.ownerStatus}>
               <Icon name="circle" size={12} color="green" /> Đang hoạt động
             </Text>
@@ -250,44 +241,28 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
 
         {/* Đường kẻ ngang */}
         <View style={style.separator}></View>
-
+  
         {/* Container cho tiện ích */}
         <View style={style.amenitiesContainer}>
           <Text style={style.amenitiesTitle}>Tiện ích</Text>
           <View style={style.amenitiesList}>
-            {house?.amenities &&
-              Object.keys(house.amenities).map((key, index) => (
-                <Text key={index} style={style.amenityItem}>
-                  {key}
-                </Text>
-              ))}
+            {house?.amenities && Object.keys(house.amenities).map((key, index) => (
+              <Text key={index} style={style.amenityItem}>
+                {key}
+              </Text>
+            ))}
           </View>
         </View>
-
+  
         {/* Đường kẻ ngang */}
         <View style={style.separator}></View>
+  
         {/* Container cho thông tin chi tiết về căn hộ */}
         <View style={style.additionalDetailsContainer}>
           <Text style={style.additionalDetailsTitle}>Thông Tin Chi Tiết</Text>
           <Text style={style.detailText}>{house?.description}</Text>
         </View>
-
-        {/* Đường kẻ ngang */}
-        <View style={style.separator}></View>
-
-        {/* Container cho các nút như Đặt Phòng, Gọi Điện */}
-        <View style={style.buttonContainer}>
-          <TouchableOpacity style={style.bookNowBtn}>
-            <Text style={{ color: COLORS.white }}>Đặt Phòng</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={style.circleButton}>
-            <Icon name="message" size={20} color={COLORS.dark} />
-          </TouchableOpacity>
-          <TouchableOpacity style={style.circleButton}>
-            <Icon name="phone" size={20} color={COLORS.dark} />
-          </TouchableOpacity>
-        </View>
-
+  
         {/* Đường kẻ ngang */}
         <View style={style.separator}></View>
 
@@ -317,8 +292,23 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           </View>
         ))}
       </ScrollView>
+  
+      {/* Button Container */}
+      <View style={style.buttonContainer}>
+        <TouchableOpacity style={style.bookNowBtn}>
+          <Text style={{ color: COLORS.white }}>Đặt Phòng</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={style.circleButton}>
+          <Icon name="message" size={20} color={COLORS.dark} />
+        </TouchableOpacity>
+        <TouchableOpacity style={style.circleButton}>
+          <Icon name="phone" size={20} color={COLORS.dark} />
+        </TouchableOpacity>
+      </View>
+      
     </SafeAreaView>
   );
+  
 };
 
 const style = StyleSheet.create({
