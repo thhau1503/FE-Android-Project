@@ -5,7 +5,8 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import HomeScreen from "../components/home/HomeScreen";
 import CartScreen from "../components/cart/CartScreen";
 import ProfileScreen from "../components/profile/ProfileScreen";
-
+import FavouriteScreen from "../components/favourite/Favourite";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 const Tab = createBottomTabNavigator();
 
 const optionScreen = ({ route }: any) => ({
@@ -26,8 +27,8 @@ const optionScreen = ({ route }: any) => ({
       iconName = focused ? "notifications-sharp" : "notifications-outline";
     } else if (route.name === "note") {
       iconName = focused ? "book" : "book-outline";
-    } else if (route.name === "cart") {
-      iconName = focused ? "cart" : "cart-outline";
+    } else if (route.name === "Yêu thích") {
+      iconName = focused ? "heart" : "heart-outline";
     } else if (route.name === "profile") {
       iconName = focused ? "person-circle" : "person-circle-outline";
     } else if (route.name === "trang chủ") {
@@ -49,7 +50,7 @@ const TabNavigator = () => {
     <>
       <Tab.Navigator screenOptions={optionScreen}>
         <Tab.Screen name="trang chủ" component={HomeScreen}></Tab.Screen>
-        <Tab.Screen name="cart" component={CartScreen}></Tab.Screen>
+        <Tab.Screen name="Yêu thích" component={FavouriteScreen}></Tab.Screen>
         <Tab.Screen name="profile" component={ProfileScreen}></Tab.Screen>
       </Tab.Navigator>
     </>
