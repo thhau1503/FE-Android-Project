@@ -5,7 +5,9 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import HomeScreen from "../components/home/HomeScreen";
 import CartScreen from "../components/cart/CartScreen";
 import ProfileScreen from "../components/profile/ProfileScreen";
-
+import FavouriteScreen from "../components/favourite/Favourite";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import ChatForm from "../components/chat/Chat";
 const Tab = createBottomTabNavigator();
 
 const optionScreen = ({ route }: any) => ({
@@ -26,12 +28,14 @@ const optionScreen = ({ route }: any) => ({
       iconName = focused ? "notifications-sharp" : "notifications-outline";
     } else if (route.name === "note") {
       iconName = focused ? "book" : "book-outline";
-    } else if (route.name === "cart") {
-      iconName = focused ? "cart" : "cart-outline";
+    } else if (route.name === "Yêu thích") {
+      iconName = focused ? "heart" : "heart-outline";
     } else if (route.name === "profile") {
       iconName = focused ? "person-circle" : "person-circle-outline";
-    } else if (route.name === "trang chủ") {
+    } else if (route.name === "Trang chủ") {
       iconName = focused ? "home" : "home-outline";
+    } else if (route.name === "Chat") {
+      iconName = focused ? "chatbubbles-sharp" : "chatbubbles-outline";
     }
 
     // You can return any component that you like here!
@@ -48,9 +52,10 @@ const TabNavigator = () => {
   return (
     <>
       <Tab.Navigator screenOptions={optionScreen}>
-        <Tab.Screen name="trang chủ" component={HomeScreen}></Tab.Screen>
-        <Tab.Screen name="cart" component={CartScreen}></Tab.Screen>
+        <Tab.Screen name="Trang chủ" component={HomeScreen}></Tab.Screen>
+        <Tab.Screen name="Yêu thích" component={FavouriteScreen}></Tab.Screen>
         <Tab.Screen name="profile" component={ProfileScreen}></Tab.Screen>
+        <Tab.Screen name="Chat" component={ChatForm}></Tab.Screen>
       </Tab.Navigator>
     </>
   );
