@@ -8,6 +8,7 @@ import {
   Image,
   TextInput,
   StatusBar,
+  Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
@@ -36,15 +37,16 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [userRole, setUserRole] = useState("");
-  const [selectImage, setSelectImage] = useState(
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbzwf4BLLOYmioPDykqjFiyJ9Nk1jFscdf7A&s"
-  );
+  const [selectImage, setSelectImage] = useState<string | null>(null);
 
+  // Lấy chữ cái đầu tiên từ tên người dùng
+  const getInitials = (name: string) => {
+    return name ? name.charAt(0).toUpperCase() : "U";
+  };
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const token = await AsyncStorage.getItem("token");
-        console.log("token:", token);
         if (token) {
           const response = await axios.get(
             "https://be-android-project.onrender.com/api/auth/me",
@@ -59,15 +61,14 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
           navigation.navigate("login");
         }
       } catch (error: any) {
-        // Nếu lỗi liên quan đến token không hợp lệ, logout và điều hướng người dùng về login
         if (
           error.response &&
           error.response.data.msg === "Token is not valid"
         ) {
-          await AsyncStorage.removeItem("token"); // Xóa token không hợp lệ
-          navigation.navigate("login"); // Điều hướng về màn hình login
+          await AsyncStorage.removeItem("token");
+          navigation.navigate("login");
         } else {
-          console.error(error); // Xử lý các lỗi khác (nếu có)
+          console.error(error);
         }
       } finally {
         setLoading(false);
@@ -77,9 +78,7 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
     fetchUserProfile();
   }, []);
 
-  // Cập nhật userName khi user thay đổi
   useEffect(() => {
-    console.log(user);
     if (user) {
       setUserName(user.username || "");
       setEmail(user.email || "");
@@ -90,33 +89,62 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
   }, [user]);
 
   const handleImageSelection = async () => {
-    let result = ImagePicker.launchImageLibraryAsync({
+    let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 4],
       quality: 1,
     });
-    console.log(result);
-    if (!(await result).canceled) {
-      setSelectImage((await result).assets[0].uri);
+    if (!result.canceled) {
+      setSelectImage(result.assets[0].uri);
     }
   };
-  // handleLogout
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem("token");
     navigation.navigate("login");
   };
 
-  // handleSaveChanges
+  const handleSaveChanges = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token || !user) {
+        throw new Error("No token or user found");
+      }
 
-  const handleSaveChanges = async () => {};
+      const updatedData = {
+        username: userName,
+        email: email,
+        phone: phone,
+        address: address,
+      };
 
-  // handleRegister
+      const response = await axios.put(
+        `https://be-android-project.onrender.com/api/auth/update/${user.id}`,
+        updatedData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        Alert.alert("Success", "Thông tin của bạn đã được cập nhật thành công.");
+        setUser(response.data); // Cập nhật lại thông tin người dùng trong state
+      } else {
+        Alert.alert("Error", "Cập nhật thông tin thất bại.");
+      }
+    } catch (error: any) {
+      console.error("Update error:", error);
+      Alert.alert("Error", error.response?.data?.msg || "Cập nhật thất bại.");
+    }
+  };
+
   const handleRegister = async () => {
-    // await AsyncStorage.removeItem("token");
     navigation.navigate("register");
   };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
       <StatusBar backgroundColor={"#989993"} barStyle="light-content" />
@@ -133,7 +161,13 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
         <View style={{ alignItems: "center", marginVertical: 22 }}>
           <TouchableOpacity onPress={() => handleImageSelection()}>
             <Image
-              source={{ uri: selectImage }}
+              source={{
+                uri: selectImage
+                  ? selectImage // Nếu người dùng có ảnh đại diện, hiển thị ảnh đó
+                  : `https://ui-avatars.com/api/?name=${getInitials(
+                      userName
+                    )}&background=random&color=fff&size=256`, // Nếu không có, hiển thị avatar từ tên
+              }}
               style={{
                 height: 170,
                 width: 170,
