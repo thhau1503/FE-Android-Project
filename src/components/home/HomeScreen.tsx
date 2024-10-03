@@ -83,11 +83,16 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           }
         );
         setPosts(response.data);
-        const sortedPosts = response.data.sort(
-          (a: any, b: any) =>
-            new Date(b.create_at).getTime() - new Date(a.create_at).getTime()
+
+        const responseTopViews = await axios.get(
+          "https://be-android-project.onrender.com/api/post/top-views",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
-        setTopPosts(sortedPosts.slice(0, 6));
+        setTopPosts(response.data);
       } else {
         navigation.navigate("login");
       }
@@ -186,7 +191,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           <ListCategory />
 
           <>
-            <NoteAddMore title="Sản phẩm tiểu biểu" typeSeeMore="product" />
+            <NoteAddMore title="Nhà ở tiểu biểu" typeSeeMore="product" />
             <View
               style={{
                 flexDirection: "row",
@@ -198,7 +203,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                 {topPosts.map((item, index) => (
                   <View
                     key={item._id}
-                    style={{ marginRight: 10, borderRadius: 10, padding: 5 }}
+                    style={{ marginRight: 10, borderRadius: 10, padding: 2 }}
                   >
                     <TouchableOpacity
                       onPress={() => {
@@ -207,14 +212,14 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                     >
                       <Image
                         style={{
-                          width: 240,
-                          height: 240,
+                          width: 300,
+                          height: 300,
                           borderTopRightRadius: 10,
                           borderTopLeftRadius: 10,
                         }}
                         source={{
                           uri:
-                            item.image_url ||
+                            item.images[0] ||
                             "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
                         }}
                       />
