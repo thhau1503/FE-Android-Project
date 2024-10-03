@@ -17,6 +17,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Waiting from "./Waiting";
 import ListCategory from "./ListCategory";
 import NoteAddMore from "./NoteAddMore";
+
 interface User {
   id: string;
   username: string;
@@ -102,7 +103,27 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       setIsLoading(false);
     }
   };
-
+  const getTopPosts = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        const response = await axios.get(
+          "https://be-android-project.onrender.com/api/post/top-views", // Gọi API top views
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setTopPosts(response.data); // Lưu dữ liệu top posts
+      } else {
+        navigation.navigate("login");
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  
   const handleSearch = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -128,7 +149,11 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   useEffect(() => {
     getApi();
   }, []);
-
+  useEffect(() => {
+    getApi(); // Gọi API để lấy tất cả các bài post
+    getTopPosts(); // Gọi API để lấy các bài post có nhiều lượt xem nhất
+  }, []);
+  
   return (
     <>
       <StatusBar backgroundColor="#2d2da4" barStyle="light-content" />
@@ -201,13 +226,17 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             >
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {topPosts.map((item, index) => (
+<<<<<<< HEAD
                   <View
                     key={item._id}
                     style={{ marginRight: 10, borderRadius: 10, padding: 2 }}
                   >
+=======
+                  <View key={item._id} style={{ marginRight: 10, borderRadius: 10, padding: 5 }}>
+>>>>>>> dev
                     <TouchableOpacity
                       onPress={() => {
-                        navigation.navigate("detailItem", { item });
+                        navigation.navigate("detailItem", { postId: item._id });
                       }}
                     >
                       <Image
@@ -219,23 +248,24 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                         }}
                         source={{
                           uri:
+<<<<<<< HEAD
                             item.images[0] ||
                             "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
+=======
+                            item.images && item.images.length > 0 
+                            ? item.images[0] 
+                            : "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
+>>>>>>> dev
                         }}
                       />
                     </TouchableOpacity>
-                    <View
-                      style={{
-                        backgroundColor: "rgb(210, 210, 210)",
-                        borderBottomLeftRadius: 10,
-                        borderBottomRightRadius: 10,
-                      }}
-                    >
+                    <View style={{ backgroundColor: "rgb(210, 210, 210)", borderBottomLeftRadius: 10, borderBottomRightRadius: 10 }}>
                       <Text style={{ textAlign: "center" }}>{item.title}</Text>
                     </View>
                   </View>
                 ))}
               </ScrollView>
+
             </View>
           </>
 
@@ -253,15 +283,18 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                   <View style={styles.item}>
                     <TouchableOpacity
                       onPress={() => {
-                        navigation.navigate("detailItem", { item });
+                        navigation.navigate("detailItem", { postId: item._id });
                       }}
                     >
                       <Image
                         style={styles.photoItem}
                         source={{
-                          uri: "https://www.treehugger.com/thmb/JWrVwio-VZbHdPlrbfuLo4Y6RgQ=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/th-house-oddo-architects-6-cc292e3b8a874f9e89893cf60f39b3f1.jpeg",
+                          uri: item.images && item.images.length > 0 
+                                ? item.images[0] 
+                                : "https://www.treehugger.com/thmb/JWrVwio-VZbHdPlrbfuLo4Y6RgQ=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/th-house-oddo-architects-6-cc292e3b8a874f9e89893cf60f39b3f1.jpeg",
                         }}
                       />
+
                     </TouchableOpacity>
                     <View style={styles.saleItem}>
                       <Text style={{ color: "yellow", textAlign: "center" }}>
@@ -295,8 +328,10 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                           justifyContent: "space-between",
                         }}
                       >
-                        <Text style={{ color: "#e21f6d" }}>đ{item.price}</Text>
-                        <Text>Selled: 20</Text>
+                        <Text style={{ color: "#e21f6d" }}>
+                          đ{item.price}
+                        </Text>
+                        <Text>Rate: {item.averageRating}</Text>
                       </View>
                     </View>
                   </View>

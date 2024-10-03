@@ -129,11 +129,11 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           </View>
 
           <View>
-            <TouchableOpacity
-              onPress={() => Alert.alert("forget password form!")}
-            >
-              <Text style={{ color: "#1bcdff" }}>Forgot password</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ForgotPassword')}>
+            <Text style={{ color: "#1bcdff" }}>Forgot password</Text>
+          </TouchableOpacity>
+
           </View>
         </View>
         <TouchableOpacity style={styles.btn} onPress={() => handleLogin()}>
