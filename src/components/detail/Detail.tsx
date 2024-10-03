@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import axios from "axios";
-import Video from 'react-native-video';
+import Video from "react-native-video";
 const { width } = Dimensions.get("screen");
 
 // Thêm trực tiếp các giá trị màu
@@ -170,14 +170,19 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
               keyExtractor={(_, index) => index.toString()}
               renderItem={({ item }) => (
                 <ImageBackground
-                  style={style.backgroundImage}
+                  style={{
+                    height: 450,
+                    width: 450,
+                    borderRadius: 20,
+                  }}
+                  resizeMode="cover"
                   source={{ uri: item }}
                 >
                   <View style={style.header}>
                     <View style={style.headerBtn}>
                       <Icon
                         name="arrow-back-ios"
-                        size={20}
+                        size={23}
                         onPress={() => navigation.goBack()}
                       />
                     </View>
@@ -228,9 +233,15 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           {/* Địa chỉ */}
           <View style={style.addressContainer}>
             <Icon name="location-pin" size={18} color="gray" />
-            <View style={style.addressTextContainer}>
-              <Text style={style.address}>
-                {house?.location.address}, {house?.location.ward},{" "}
+            <View
+              style={{
+                flex: 1,
+                flexWrap: "wrap",
+                flexDirection: "row",
+              }}
+            >
+              <Text style={[style.address, { flexWrap: "wrap" }]}>
+                {house?.location.address}, {house?.location.ward},
                 {house?.location.district}, {house?.location.city}
               </Text>
             </View>
@@ -240,7 +251,9 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           <View style={style.additionalInfoContainer}>
             <View style={style.infoItem}>
               <Icon name="attach-money" size={18} color="green" />
-              <Text style={style.price}>{house?.price} triệu/tháng</Text>
+              <Text style={style.price}>
+                {house?.price.toLocaleString("vi-VN")} triệu/tháng
+              </Text>
             </View>
             <View style={style.infoItem}>
               <Icon name="square-foot" size={18} color="gray" />
@@ -262,8 +275,8 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
             <Image
               source={{
                 uri: landlord.avatar
-                  ? landlord.avatar 
-                  : "https://th.bing.com/th/id/OIP.U0D5JdoPkQMi4jhiriSVsgHaHa?w=186&h=186&c=7&r=0&o=5&dpr=1.1&pid=1.7", 
+                  ? landlord.avatar
+                  : "https://th.bing.com/th/id/OIP.U0D5JdoPkQMi4jhiriSVsgHaHa?w=186&h=186&c=7&r=0&o=5&dpr=1.1&pid=1.7",
               }}
               style={style.ownerAvatar}
             />
@@ -279,7 +292,6 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
             </View>
           </View>
         )}
-
 
         {/* Đường kẻ ngang */}
         <View style={style.separator}></View>
@@ -352,7 +364,6 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
   );
 };
 
-
 const style = StyleSheet.create({
   backgroundImageContainer: {
     flex: 1,
@@ -362,12 +373,6 @@ const style = StyleSheet.create({
     marginTop: 20,
     height: 350,
     width: "90%",
-  },
-  backgroundImage: {
-    height: "100%",
-    width: 405,
-    borderRadius: 20,
-    overflow: "hidden",
   },
   headerBtn: {
     height: 40,
@@ -533,7 +538,7 @@ const style = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 10,
-    marginLeft:10,
+    marginLeft: 10,
     alignItems: "center",
   },
   bookNowBtn: {
@@ -554,12 +559,11 @@ const style = StyleSheet.create({
     backgroundColor: "light",
     marginHorizontal: 25, // Mỗi nút cách nhau 5px từ hai bên, tổng cộng 10px
   },
-  
+
   iconContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 10,
-    paddingHorizontal: 20,
     backgroundColor: "white",
   },
   iconItem: {
@@ -569,7 +573,7 @@ const style = StyleSheet.create({
   },
   iconText: {
     marginTop: 5,
-    fontSize: 20,
+    fontSize: 13,
     color: "grey",
   },
   commentSection: {

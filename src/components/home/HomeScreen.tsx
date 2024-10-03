@@ -17,7 +17,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Waiting from "./Waiting";
 import ListCategory from "./ListCategory";
 import NoteAddMore from "./NoteAddMore";
-
+import Entypo from "@expo/vector-icons/Entypo";
 interface User {
   id: string;
   username: string;
@@ -84,11 +84,16 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           }
         );
         setPosts(response.data);
-        const sortedPosts = response.data.sort(
-          (a: any, b: any) =>
-            new Date(b.create_at).getTime() - new Date(a.create_at).getTime()
+
+        const responseTopViews = await axios.get(
+          "https://be-android-project.onrender.com/api/post/top-views",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
-        setTopPosts(sortedPosts.slice(0, 6));
+        setTopPosts(response.data);
       } else {
         navigation.navigate("login");
       }
@@ -118,7 +123,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       console.log(err);
     }
   };
-  
+
   const handleSearch = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -148,7 +153,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     getApi(); // Gọi API để lấy tất cả các bài post
     getTopPosts(); // Gọi API để lấy các bài post có nhiều lượt xem nhất
   }, []);
-  
+
   return (
     <>
       <StatusBar backgroundColor="#2d2da4" barStyle="light-content" />
@@ -211,7 +216,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           <ListCategory />
 
           <>
-            <NoteAddMore title="Sản phẩm tiểu biểu" typeSeeMore="product" />
+            <NoteAddMore title="Nhà ở tiểu biểu" typeSeeMore="product" />
             <View
               style={{
                 flexDirection: "row",
@@ -221,7 +226,10 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             >
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {topPosts.map((item, index) => (
-                  <View key={item._id} style={{ marginRight: 10, borderRadius: 10, padding: 5 }}>
+                  <View
+                    key={item._id}
+                    style={{ marginRight: 10, borderRadius: 10, padding: 5 }}
+                  >
                     <TouchableOpacity
                       onPress={() => {
                         navigation.navigate("detailItem", { postId: item._id });
@@ -229,59 +237,53 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                     >
                       <Image
                         style={{
-                          width: 240,
-                          height: 240,
+                          width: 300,
+                          height: 300,
                           borderTopRightRadius: 10,
                           borderTopLeftRadius: 10,
                         }}
                         source={{
                           uri:
-                            item.images && item.images.length > 0 
-                            ? item.images[0] 
-                            : "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
+                            item.images && item.images.length > 0
+                              ? item.images[0]
+                              : "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
                         }}
                       />
                     </TouchableOpacity>
-                    <View style={{ backgroundColor: "rgb(210, 210, 210)", borderBottomLeftRadius: 10, borderBottomRightRadius: 10 }}>
-                      <Text style={{ textAlign: "center" }}>{item.title}</Text>
-                    </View>
-                  </View>
-                ))}
-              </ScrollView>
-
-            </View>
-          </>
-
-          <NoteAddMore title="Sản phẩm" typeSeeMore="product" />
-          <View style={{ backgroundColor: "rgba(240, 240, 240,0.2)" }}>
-            {isLoading ? (
-              <Waiting />
-            ) : (
-              <FlatList
-                data={posts}
-                scrollEnabled={false}
-                numColumns={2}
-                columnWrapperStyle={styles.row}
-                renderItem={({ item }: any) => (
-                  <View style={styles.item}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        navigation.navigate("detailItem", { postId: item._id });
+                    <View
+                      style={{
+                        backgroundColor: "rgb(255, 255, 255)",
+                        borderBottomLeftRadius: 10,
+                        borderBottomRightRadius: 10,
                       }}
                     >
-                      <Image
-                        style={styles.photoItem}
-                        source={{
-                          uri: item.images && item.images.length > 0 
-                                ? item.images[0] 
-                                : "https://www.treehugger.com/thmb/JWrVwio-VZbHdPlrbfuLo4Y6RgQ=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/th-house-oddo-architects-6-cc292e3b8a874f9e89893cf60f39b3f1.jpeg",
-                        }}
-                      />
+                      <Text style={{ textAlign: "center", fontWeight: "bold" }}>
+                        {item.title}
+                      </Text>
 
-                    </TouchableOpacity>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          padding: 10,
+                        }}
+                      >
+                        <Text style={{ color: "#e21f6d" }}>
+                          đ{item.price.toLocaleString("vi-VN")} triệu/tháng
+                        </Text>
+                        <View style={{ flexDirection: "row" }}>
+                          <Text>Rate: {item.averageRating}</Text>
+                          <Entypo
+                            name="star"
+                            size={17}
+                            color="rgb(157, 168, 0)"
+                          />
+                        </View>
+                      </View>
+                    </View>
                     <View style={styles.saleItem}>
                       <Text style={{ color: "yellow", textAlign: "center" }}>
-                        30%
+                        {item.views}
                       </Text>
                       <Text
                         style={{
@@ -290,36 +292,98 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                           fontWeight: "bold",
                         }}
                       >
-                        sales
+                        views
                       </Text>
                     </View>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          </>
+
+          <NoteAddMore title="Sản phẩm" typeSeeMore="product" />
+          <View style={{ backgroundColor: "rgba(240, 240, 240,0.2)" }}>
+            {isLoading ? (
+              <Waiting />
+            ) : (
+              <>
+                <FlatList
+                  data={posts}
+                  scrollEnabled={false}
+                  renderItem={({ item }: any) => (
                     <View
                       style={{
-                        flexDirection: "column",
-                        justifyContent: "space-between",
-                        padding: 10,
+                        marginBottom: 10,
+                        width: "100%",
+                        backgroundColor: "#fff",
                       }}
                     >
-                      <View>
-                        <Text style={{ color: "black", paddingBottom: 15 }}>
-                          {item.title}
-                        </Text>
-                      </View>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
+                      <TouchableOpacity
+                        onPress={() => {
+                          navigation.navigate("detailItem", {
+                            postId: item._id,
+                          });
                         }}
                       >
-                        <Text style={{ color: "#e21f6d" }}>
-                          đ{item.price}
+                        <Image
+                          style={{ width: "100%", height: 250 }}
+                          source={{
+                            uri:
+                              item.images && item.images.length > 0
+                                ? item.images[0]
+                                : "https://www.treehugger.com/thmb/JWrVwio-VZbHdPlrbfuLo4Y6RgQ=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/th-house-oddo-architects-6-cc292e3b8a874f9e89893cf60f39b3f1.jpeg",
+                          }}
+                        />
+                      </TouchableOpacity>
+                      {/* <View style={styles.saleItem}>
+                        <Text style={{ color: "yellow", textAlign: "center" }}>
+                          30%
                         </Text>
-                        <Text>Rate: {item.averageRating}</Text>
+                        <Text
+                          style={{
+                            color: "white",
+                            textAlign: "center",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          sales
+                        </Text>
+                      </View> */}
+                      <View
+                        style={{
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          padding: 10,
+                        }}
+                      >
+                        <View>
+                          <Text style={{ color: "black", paddingBottom: 15 }}>
+                            {item.title}
+                          </Text>
+                        </View>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <Text style={{ color: "#e21f6d" }}>
+                            đ{item.price.toLocaleString("vi-VN")} triệu/tháng
+                          </Text>
+                          <View style={{ flexDirection: "row" }}>
+                            <Text>Rate: {item.averageRating}</Text>
+                            <Entypo
+                              name="star"
+                              size={17}
+                              color="rgb(157, 168, 0)"
+                            />
+                          </View>
+                        </View>
                       </View>
                     </View>
-                  </View>
-                )}
-              />
+                  )}
+                />
+              </>
             )}
           </View>
         </ScrollView>
@@ -352,23 +416,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
   },
-  item: {
-    marginBottom: 10,
-    width: "45%",
-    backgroundColor: "#fff",
-  },
-  photoItem: {
-    width: "100%",
-    height: 150,
-  },
   saleItem: {
     backgroundColor: "rgba(0,0,0,0.7)",
     width: 60,
     height: 60,
     position: "absolute",
     padding: 7,
-    top: 0,
-    right: 0,
+    top: 5,
+    right: 5,
     justifyContent: "center",
     alignItems: "center",
     borderBottomLeftRadius: 20,
