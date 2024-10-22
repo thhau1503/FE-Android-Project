@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,41 +7,85 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("screen");
 
-const favouriteData = [
-  {
-    id: "1",
-    title: "Nhà trọ sinh viên",
-    price: "2,500,000 VND",
-    image: "https://th.bing.com/th/id/R.2b14ab0bb5331f24b22d6fa3d1e1def8?rik=ZzcsDSt%2femihBw&pid=ImgRaw&r=0",
-  },
-  {
-    id: "2",
-    title: "Nhà trọ sinh viên",
-    price: "2,500,000 VND",
-    image: "https://th.bing.com/th/id/R.2b14ab0bb5331f24b22d6fa3d1e1def8?rik=ZzcsDSt%2femihBw&pid=ImgRaw&r=0",
-  },
-  {
-    id: "3",
-    title: "Nhà trọ sinh viên",
-    price: "2,500,000 VND",
-    image: "https://th.bing.com/th/id/R.2b14ab0bb5331f24b22d6fa3d1e1def8?rik=ZzcsDSt%2femihBw&pid=ImgRaw&r=0",
-  },
-];
+const FavouriteScreen = ({ navigation }) => {
+  const [favourites, setFavourites] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-const FavouriteScreen = () => {
-  const renderItem = ({ item }: any) => (
-    <TouchableOpacity style={styles.card}>
-      <Image source={{ uri: item.image }} style={styles.image} />
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.price}>Giá: {item.price}</Text>
+  useEffect(() => {
+    const fetchFavourites = async () => {
+      try {
+        const token = await AsyncStorage.getItem("token");
+        if (token) {
+          const response = await axios.get(
+            "https://be-android-project.onrender.com/api/favorite/user",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          const favouritePosts = response.data;
+
+          const detailedPostsPromises = favouritePosts.map(async (favourite) => {
+            try {
+              const postResponse = await axios.get(
+                `https://be-android-project.onrender.com/api/post/${favourite.id_post}`
+              );
+              return postResponse.data;
+            } catch (error) {
+              console.error(`Lỗi khi lấy chi tiết bài viết ${favourite.id_post}:`, error);
+              return null;
+            }
+          });
+
+          const detailedPosts = await Promise.all(detailedPostsPromises);
+          const validPosts = detailedPosts.filter((post) => post !== null);
+          setFavourites(validPosts);
+        } else {
+          navigation.navigate("login");
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách yêu thích:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFavourites();
+  }, []);
+
+  const handlePressItem = (postId: string) => {
+    navigation.navigate("detailItem", { postId });
+  };
+
+  const renderItem = ({ item }) => {
+    return (
+      <TouchableOpacity style={styles.card} onPress={() => handlePressItem(item._id)}>
+        <Image source={{ uri: item.images?.[0] || 'https://via.placeholder.com/150' }} style={styles.image} />
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{item.title || 'Không có tiêu đề'}</Text>
+          <Text style={styles.price}>Giá: {item.price ? `${item.price.toLocaleString('vi-VN')} VND` : 'Không có giá'}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FFC107" />
+        <Text>Đang tải danh sách yêu thích...</Text>
       </View>
-    </TouchableOpacity>
-  );
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -57,9 +101,9 @@ const FavouriteScreen = () => {
 
       <View style={styles.listContainer}>
         <FlatList
-          data={favouriteData}
+          data={favourites}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id}
           showsVerticalScrollIndicator={false}
         />
       </View>
@@ -70,7 +114,7 @@ const FavouriteScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0f0f0", // Màu nền nhẹ nhàng và sáng sủa
+    backgroundColor: "#f0f0f0",
   },
   headerContainer: {
     position: "relative",
@@ -85,14 +129,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-    color: "#FFC107", // Màu vàng nổi bật cho tiêu đề
+    color: "#FFC107",
     marginVertical: 10,
     position: "absolute",
     top: 150,
     left: 0,
     right: 0,
     zIndex: 1,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)', // Đổ bóng cho chữ
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
   },
@@ -107,17 +151,17 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderRadius: 10,
     overflow: "hidden",
-    shadowColor: "#000", // Đổ bóng nhẹ để tạo cảm giác nổi
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 5, // Tương thích với Android
+    elevation: 5,
   },
   image: {
-    width: 120, // Tăng kích thước hình ảnh cho rõ hơn
+    width: 120,
     height: 120,
     resizeMode: "cover",
   },
@@ -125,17 +169,22 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     justifyContent: "center",
-    backgroundColor: "#F8F9FA", // Màu nền sáng cho phần text
+    backgroundColor: "#F8F9FA",
   },
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#343A40", // Màu chữ đậm hiện đại
+    color: "#343A40",
   },
   price: {
     fontSize: 16,
-    color: "#E63946", // Màu đỏ nhạt cho giá
+    color: "#E63946",
     marginTop: 5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 
