@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   ImageBackground,
   SafeAreaView,
@@ -15,7 +16,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import axios from "axios";
-import Video from "react-native-video";
+
 const { width } = Dimensions.get("screen");
 
 // Thêm trực tiếp các giá trị màu
@@ -30,54 +31,6 @@ const COLORS = {
   green: "#4CAF50",
 };
 
-// Định nghĩa kiểu dữ liệu bài viết
-interface Post {
-  title: string;
-  description: string;
-  price: number;
-  location: {
-    address: string;
-    city: string;
-    district: string;
-    ward: string;
-    geoLocation: {
-      latitude: number;
-      longitude: number;
-    };
-  };
-  landlord: string;
-  roomType: string;
-  size: number;
-  availability: boolean;
-  amenities: {
-    wifi: boolean;
-    airConditioner: boolean;
-    heater: boolean;
-    kitchen: boolean;
-    parking: boolean;
-  };
-  additionalCosts: {
-    electricity: number;
-    water: number;
-    internet: number;
-    cleaning: number;
-  };
-  images: string[];
-  videos: string[];
-  averageRating: number;
-  views: number;
-  status: string;
-}
-
-// Định nghĩa kiểu dữ liệu cho người cho thuê
-interface Landlord {
-  username: string;
-  email: string;
-  phone: string;
-  address: string;
-  avatar: string;
-}
-
 // Kiểu dữ liệu của các props mà component nhận vào
 interface RentalHomeDetailProps {
   navigation: any;
@@ -87,11 +40,13 @@ interface RentalHomeDetailProps {
 const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
   const { postId } = route.params;
 
-  const [house, setHouse] = useState<Post | null>(null);
-  const [landlord, setLandlord] = useState<Landlord | null>(null);
+  const [house, setHouse] = useState(null);
+  const [landlord, setLandlord] = useState(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [comment, setComment] = useState<string>("");
+  const [isFavorite, setIsFavorite] = useState(false); // Trạng thái yêu thích
+  const [userId, setUserId] = useState<string>(""); // Lưu trữ userId
 
   const [comments, setComments] = useState([
     {
@@ -101,25 +56,166 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
     },
     { id: "2", user: "Người dùng B", text: "Giá tốt, gần trường học." },
   ]);
-
+  // Hàm thêm comment vào danh sách
   const handleCommentSubmit = () => {
     if (comment.trim()) {
-      setComments([
-        ...comments,
-        { id: String(comments.length + 1), user: "Bạn", text: comment },
-      ]);
-      setComment("");
+      const newComment = {
+        id: String(comments.length + 1),
+        user: "Bạn",
+        text: comment,
+      };
+      setComments([...comments, newComment]);
+      setComment(""); // Xóa nội dung comment sau khi gửi
+    }
+  };
+
+  // Hàm lấy thông tin người dùng hiện tại và kiểm tra bài viết đã yêu thích hay chưa
+  const fetchUserInfo = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        // Gọi API để lấy thông tin người dùng
+        const userResponse = await axios.get(
+          "https://be-android-project.onrender.com/api/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setUserId(userResponse.data._id);
+
+        // Gọi API để kiểm tra bài viết đã được thêm vào mục yêu thích chưa
+        const response = await axios.get(
+          `https://be-android-project.onrender.com/api/favorite/user`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const favoritePosts = response.data;
+        const isFav = favoritePosts.some((fav) => fav.id_post === postId);
+        setIsFavorite(isFav);
+      }
+    } catch (error) {
+      console.error(
+        "Lỗi khi lấy thông tin người dùng hoặc kiểm tra mục yêu thích:",
+        error
+      );
+    }
+  };
+  const fetchUserId = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        const response = await axios.get(
+          "https://be-android-project.onrender.com/api/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const userId = response.data.id; // Lấy id_user_rent từ response
+        return userId;
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin người dùng:", error);
+      return null;
+    }
+  };
+
+  // Hàm thêm vào mục yêu thích
+  const addToFavorite = async () => {
+    try {
+      const userId = await fetchUserId(); // Lấy userId từ API hoặc token
+      if (!userId) {
+        console.error("Không lấy được ID người dùng.");
+        return;
+      }
+
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        const response = await axios.post(
+          `https://be-android-project.onrender.com/api/favorite/create`,
+          {
+            id_post: postId,
+            id_user_rent: userId, // Sử dụng userId lấy từ API hoặc token
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setIsFavorite(true);
+      }
+    } catch (error) {
+      console.error("Lỗi khi thêm vào mục yêu thích:", error);
+    }
+  };
+
+  // Hàm xóa khỏi mục yêu thích
+  const removeFromFavorite = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        // Fetch lại danh sách các mục yêu thích để lấy `_id` của mục yêu thích cần xóa
+        const favoritesResponse = await axios.get(
+          `https://be-android-project.onrender.com/api/favorite/user`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const favoritePosts = favoritesResponse.data;
+
+        // Tìm `_id` của mục yêu thích dựa trên `postId`
+        const favoriteItem = favoritePosts.find(
+          (fav) => fav.id_post === postId
+        );
+
+        if (favoriteItem && favoriteItem._id) {
+          const response = await axios.delete(
+            `https://be-android-project.onrender.com/api/favorite/delete/${favoriteItem._id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          setIsFavorite(false); // Cập nhật trạng thái yêu thích sau khi xóa
+        } else {
+          console.error("Không tìm thấy mục yêu thích để xóa.");
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa khỏi mục yêu thích:", error);
+    }
+  };
+
+  // Hàm xử lý khi nhấn vào biểu tượng trái tim
+  const handleFavoritePress = () => {
+    if (isFavorite) {
+      removeFromFavorite(); // Nếu đã yêu thích, xóa khỏi danh sách
+    } else {
+      addToFavorite(); // Nếu chưa yêu thích, thêm vào danh sách
     }
   };
 
   useEffect(() => {
     const fetchPostDetails = async () => {
       try {
-        // Gọi API để lấy thông tin bài viết
         const response = await axios.get(
           `https://be-android-project.onrender.com/api/post/${postId}`
         );
         setHouse(response.data);
+
+        // Gọi hàm lấy thông tin người dùng và kiểm tra yêu thích
+        await fetchUserInfo();
 
         // Gọi API để lấy thông tin người cho thuê từ landlord ID
         const landlordId = response.data.landlord;
@@ -127,7 +223,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           const landlordResponse = await axios.get(
             `https://be-android-project.onrender.com/api/auth/user/${landlordId}`
           );
-          setLandlord(landlordResponse.data); // Lưu thông tin người cho thuê
+          setLandlord(landlordResponse.data);
         }
 
         setLoading(false);
@@ -143,7 +239,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color={COLORS.blue} />
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }
@@ -183,24 +279,32 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
             />
           </View>
         )}
-
-        {/* Icon và các chức năng */}
         {house && (
           <View style={style.iconContainer}>
             <TouchableOpacity style={style.iconItem}>
               <Icon name="photo" size={27} color="#0143c7" />
               <Text style={style.iconText}>{house.images.length} Ảnh</Text>
             </TouchableOpacity>
+
             <TouchableOpacity style={style.iconItem}>
               <Icon name="videocam" size={27} color="#0143c7" />
               <Text style={style.iconText}>Video</Text>
             </TouchableOpacity>
+
             <TouchableOpacity style={style.iconItem}>
               <Icon name="map" size={27} color={COLORS.dark} />
               <Text style={style.iconText}>Bản đồ</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={style.iconItem}>
-              <Icon name="favorite" size={27} color={COLORS.red} />
+
+            <TouchableOpacity
+              style={style.iconItem}
+              onPress={handleFavoritePress}
+            >
+              <Icon
+                name="favorite"
+                size={24}
+                color={isFavorite ? COLORS.red : COLORS.grey}
+              />
               <Text style={style.iconText}>Yêu thích</Text>
             </TouchableOpacity>
           </View>
