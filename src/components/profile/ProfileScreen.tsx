@@ -44,40 +44,35 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
     return name ? name.charAt(0).toUpperCase() : "U";
   };
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const token = await AsyncStorage.getItem("token");
-        if (token) {
-          const response = await axios.get(
-            "https://be-android-project.onrender.com/api/auth/me",
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          setUser(response.data);
-        } else {
-          navigation.navigate("login");
-        }
-      } catch (error: any) {
-        if (
-          error.response &&
-          error.response.data.msg === "Token is not valid"
-        ) {
-          await AsyncStorage.removeItem("token");
-          navigation.navigate("login");
-        } else {
-          console.error(error);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUserProfile();
   }, []);
-
+  const fetchUserProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        const response = await axios.get(
+          "https://be-android-project.onrender.com/api/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setUser(response.data);
+      } else {
+        navigation.navigate("login");
+      }
+    } catch (error: any) {
+      if (error.response && error.response.data.msg === "Token is not valid") {
+        await AsyncStorage.removeItem("token");
+        navigation.navigate("login");
+      } else {
+        console.error(error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     if (user) {
       setUserName(user.username || "");
@@ -130,8 +125,11 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
       );
 
       if (response.status === 200) {
-        Alert.alert("Success", "Thông tin của bạn đã được cập nhật thành công.");
-        setUser(response.data); // Cập nhật lại thông tin người dùng trong state
+        Alert.alert(
+          "Success",
+          "Thông tin của bạn đã được cập nhật thành công."
+        );
+        fetchUserProfile();
       } else {
         Alert.alert("Error", "Cập nhật thông tin thất bại.");
       }
@@ -235,7 +233,7 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
               <TextInput
                 value={email}
                 onChangeText={(value) => setEmail(value)}
-                editable={true}
+                editable={false}
                 placeholder="Email"
               />
             </View>
@@ -261,7 +259,7 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
               <TextInput
                 value={phone}
                 onChangeText={(value) => setPhone(value)}
-                editable={true}
+                editable={false}
                 placeholder="Phone"
               />
             </View>

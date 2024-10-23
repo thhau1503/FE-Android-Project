@@ -36,7 +36,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [typeSeeMore, setTypeSeeMore] = useState("");
   const [topPosts, setTopPosts] = useState([]);
-
+  const sortedTopPosts = topPosts.sort((a, b) => b.views - a.views);
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -225,14 +225,16 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
               }}
             >
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {topPosts.map((item, index) => (
+                {sortedTopPosts.map((itemTops, index) => (
                   <View
-                    key={item._id}
+                    key={itemTops._id}
                     style={{ marginRight: 10, borderRadius: 10, padding: 5 }}
                   >
                     <TouchableOpacity
                       onPress={() => {
-                        navigation.navigate("detailItem", { postId: item._id });
+                        navigation.navigate("detailItem", {
+                          postId: itemTops._id,
+                        });
                       }}
                     >
                       <Image
@@ -244,8 +246,8 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                         }}
                         source={{
                           uri:
-                            item.images && item.images.length > 0
-                              ? item.images[0]
+                            itemTops.images && itemTops.images.length > 0
+                              ? itemTops.images[0]
                               : "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
                         }}
                       />
@@ -258,7 +260,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                       }}
                     >
                       <Text style={{ textAlign: "center", fontWeight: "bold" }}>
-                        {item.title}
+                        {itemTops.title}
                       </Text>
 
                       <View
@@ -269,10 +271,10 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                         }}
                       >
                         <Text style={{ color: "#e21f6d" }}>
-                          đ{item.price.toLocaleString("vi-VN")} triệu/tháng
+                          đ{itemTops.price.toLocaleString("vi-VN")} triệu/tháng
                         </Text>
                         <View style={{ flexDirection: "row" }}>
-                          <Text>Rate: {item.averageRating}</Text>
+                          <Text>Rate: {itemTops.averageRating}</Text>
                           <Entypo
                             name="star"
                             size={17}
@@ -283,7 +285,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                     </View>
                     <View style={styles.saleItem}>
                       <Text style={{ color: "yellow", textAlign: "center" }}>
-                        {item.views}
+                        {itemTops.views}
                       </Text>
                       <Text
                         style={{

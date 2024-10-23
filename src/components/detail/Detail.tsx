@@ -159,7 +159,6 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Hình ảnh căn hộ */}
         {house && (
           <View style={style.backgroundImageContainer}>
             <FlatList
@@ -169,25 +168,17 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
               data={house.images}
               keyExtractor={(_, index) => index.toString()}
               renderItem={({ item }) => (
-                <ImageBackground
-                  style={{
-                    height: 450,
-                    width: 450,
-                    borderRadius: 20,
-                  }}
-                  resizeMode="cover"
-                  source={{ uri: item }}
-                >
-                  <View style={style.header}>
-                    <View style={style.headerBtn}>
-                      <Icon
-                        name="arrow-back-ios"
-                        size={23}
-                        onPress={() => navigation.goBack()}
-                      />
-                    </View>
-                  </View>
-                </ImageBackground>
+                <View style={{ paddingHorizontal: 2 }}>
+                  <Image
+                    style={{
+                      height: 320,
+                      width: 320,
+                      borderRadius: 10,
+                    }}
+                    resizeMode="cover"
+                    source={{ uri: item }}
+                  />
+                </View>
               )}
             />
           </View>
@@ -197,19 +188,19 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
         {house && (
           <View style={style.iconContainer}>
             <TouchableOpacity style={style.iconItem}>
-              <Icon name="photo" size={24} color={COLORS.dark} />
+              <Icon name="photo" size={27} color="#0143c7" />
               <Text style={style.iconText}>{house.images.length} Ảnh</Text>
             </TouchableOpacity>
             <TouchableOpacity style={style.iconItem}>
-              <Icon name="videocam" size={24} color={COLORS.dark} />
+              <Icon name="videocam" size={27} color="#0143c7" />
               <Text style={style.iconText}>Video</Text>
             </TouchableOpacity>
             <TouchableOpacity style={style.iconItem}>
-              <Icon name="map" size={24} color={COLORS.dark} />
+              <Icon name="map" size={27} color={COLORS.dark} />
               <Text style={style.iconText}>Bản đồ</Text>
             </TouchableOpacity>
             <TouchableOpacity style={style.iconItem}>
-              <Icon name="favorite" size={24} color={COLORS.red} />
+              <Icon name="favorite" size={27} color={COLORS.red} />
               <Text style={style.iconText}>Yêu thích</Text>
             </TouchableOpacity>
           </View>
@@ -297,7 +288,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
         <View style={style.separator}></View>
 
         {/* Container cho tiện ích */}
-        <View style={style.amenitiesContainer}>
+        <View style={(style.amenitiesContainer, { paddingHorizontal: 20 })}>
           <Text style={style.amenitiesTitle}>Tiện ích</Text>
           <View style={style.amenitiesList}>
             {house?.amenities &&
@@ -313,7 +304,9 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
         <View style={style.separator}></View>
 
         {/* Container cho thông tin chi tiết về căn hộ */}
-        <View style={style.additionalDetailsContainer}>
+        <View
+          style={(style.additionalDetailsContainer, { paddingHorizontal: 20 })}
+        >
           <Text style={style.additionalDetailsTitle}>Thông Tin Chi Tiết</Text>
           <Text style={style.detailText}>{house?.description}</Text>
         </View>
@@ -369,16 +362,16 @@ const style = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginHorizontal: 23,
+    marginHorizontal: 20,
     marginTop: 20,
     height: 350,
-    width: "90%",
+    width: "89%",
   },
   headerBtn: {
     height: 40,
     width: 40,
     backgroundColor: "white",
-    borderRadius: 10,
+    borderRadius: 60,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -386,7 +379,7 @@ const style = StyleSheet.create({
     paddingVertical: 20,
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
+    padding: 10,
   },
   virtualTag: {
     position: "absolute",
@@ -572,8 +565,8 @@ const style = StyleSheet.create({
     paddingHorizontal: 20,
   },
   iconText: {
-    marginTop: 5,
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: "bold",
     color: "grey",
   },
   commentSection: {
@@ -596,6 +589,8 @@ const style = StyleSheet.create({
   },
   submitBtnText: {
     color: "white",
+    fontWeight: "bold",
+    fontSize: 14,
   },
   commentItem: {
     flexDirection: "row",
