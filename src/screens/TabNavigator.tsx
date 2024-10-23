@@ -54,8 +54,8 @@ const TabNavigator = () => {
       <Tab.Navigator screenOptions={optionScreen}>
         <Tab.Screen name="Trang chủ" component={HomeScreen}></Tab.Screen>
         <Tab.Screen name="Yêu thích" component={FavouriteScreen}></Tab.Screen>
-        <Tab.Screen name="profile" component={ProfileScreen}></Tab.Screen>
         <Tab.Screen name="Chat" component={ChatForm}></Tab.Screen>
+        <Tab.Screen name="profile" component={ProfileScreen}></Tab.Screen>
       </Tab.Navigator>
     </>
   );

@@ -1,4 +1,8 @@
-import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import React, { useEffect, useLayoutEffect, useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+
 import {
   View,
   Text,
@@ -8,90 +12,90 @@ import {
   Image,
 } from "react-native";
 
-const NotificationScreen = () => {
-  const [notifications, setNotifications] = useState([
-    {
-      id: "1",
-      title: "Đặt lịch xem phòng thành công",
-      message: "Bạn đã đặt lịch xem phòng vào ngày 10/10/2024",
-      time: "10 phút trước",
-      icon: "https://cdn-icons-png.flaticon.com/512/3159/3159066.png",
-    },
-    {
-      id: "2",
-      title: "Thông báo mới",
-      message: "Có một căn phòng mới vừa được thêm vào danh sách yêu thích của bạn.",
-      time: "30 phút trước",
-      icon: "https://cdn-icons-png.flaticon.com/512/3159/3159071.png",
-    },
-    {
-      id: "3",
-      title: "Cập nhật tài khoản",
-      message: "Tài khoản của bạn đã được cập nhật thành công.",
-      time: "1 giờ trước",
-      icon: "https://cdn-icons-png.flaticon.com/512/3159/3159061.png",
-    },
-    {
-      id: "4",
-      title: "Phòng trọ mới gần khu vực bạn",
-      message: "Có phòng trọ mới ở gần khu vực của bạn.",
-      time: "2 giờ trước",
-      icon: "https://cdn-icons-png.flaticon.com/512/3159/3159075.png",
-    },
-    {
-      id: "5",
-      title: "Thanh toán thành công",
-      message: "Bạn đã thanh toán thành công tiền thuê phòng.",
-      time: "3 giờ trước",
-      icon: "https://cdn-icons-png.flaticon.com/512/3159/3159077.png",
-    },
-    {
-      id: "6",
-      title: "Phòng trọ yêu thích đã được cập nhật",
-      message: "Phòng trọ yêu thích của bạn đã thay đổi giá thuê.",
-      time: "4 giờ trước",
-      icon: "https://cdn-icons-png.flaticon.com/512/3159/3159080.png",
-    },
-    {
-      id: "7",
-      title: "Nhắc nhở thanh toán",
-      message: "Bạn có một khoản thanh toán đến hạn vào ngày mai.",
-      time: "5 giờ trước",
-      icon: "https://cdn-icons-png.flaticon.com/512/3159/3159083.png",
-    },
-    {
-      id: "8",
-      title: "Tin nhắn mới",
-      message: "Bạn có một tin nhắn mới từ chủ nhà.",
-      time: "6 giờ trước",
-      icon: "https://cdn-icons-png.flaticon.com/512/3159/3159086.png",
-    },
-    {
-      id: "9",
-      title: "Hợp đồng sắp hết hạn",
-      message: "Hợp đồng thuê phòng của bạn sẽ hết hạn trong 3 ngày tới.",
-      time: "7 giờ trước",
-      icon: "https://cdn-icons-png.flaticon.com/512/3159/3159090.png",
-    },
-    {
-      id: "10",
-      title: "Thông báo bảo trì",
-      message: "Phòng trọ của bạn sẽ được bảo trì vào ngày 15/10/2024.",
-      time: "8 giờ trước",
-      icon: "https://cdn-icons-png.flaticon.com/512/3159/3159093.png",
-    },
-  ]);
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  user_role: string;
+  phone: string;
+  address: string;
+}
 
-  const renderItem = ({ item }: any) => (
-    <TouchableOpacity style={styles.notificationItem}>
-      <Image source={{ uri: item.icon }} style={styles.icon} />
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.message}>{item.message}</Text>
-        <Text style={styles.time}>{item.time}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+const NotificationScreen: React.FC = ({ navigation }: any) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [notifications, setNotifications] = useState([]);
+
+  useLayoutEffect(() => {
+    fetchNotifications();
+    fetchUserProfile();
+  }, []);
+  const fetchNotifications = async () => {
+    const token = await AsyncStorage.getItem("token");
+    if (token) {
+      const response = await axios.get(
+        "https://be-android-project.onrender.com/api/notification",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setNotifications(response.data);
+    }
+  };
+  const fetchUserProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        const response = await axios.get(
+          "https://be-android-project.onrender.com/api/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setUser(response.data);
+      } else {
+        navigation.navigate("login");
+      }
+    } catch (error: any) {
+      if (error.response && error.response.data.msg === "Token is not valid") {
+        await AsyncStorage.removeItem("token");
+        navigation.navigate("login");
+      } else {
+        console.error(error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  const renderItem = ({ item }: any) => {
+    return (
+      <TouchableOpacity style={styles.notificationItem}>
+        <Image
+          source={{
+            uri: "https://cdn-icons-png.flaticon.com/512/3159/3159090.png",
+          }}
+          style={styles.icon}
+        />
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>
+            {item.id_user ? item.id_user.username : "guest"}
+          </Text>
+          <Text style={styles.message}>{item.message}</Text>
+          <Text style={styles.time}>
+            {item.create_at
+              ? formatDistanceToNow(new Date(item.create_at), {
+                  addSuffix: true,
+                })
+              : "Unknown time"}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>

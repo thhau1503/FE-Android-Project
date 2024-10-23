@@ -114,8 +114,11 @@ const RegisterScreen = ({ navigation }: any) => {
         apiData
       );
       if (response.status === 200 || response.status === 201) {
-        Alert.alert("Success", "Register successful! Redirecting to OTP screen...");
-  
+        Alert.alert(
+          "Success",
+          "Register successful! Redirecting to OTP screen..."
+        );
+
         navigation.navigate("otpVerification", { email: email });
       }
     } catch (error) {
@@ -384,7 +387,7 @@ const RegisterScreen = ({ navigation }: any) => {
                 <TextInput
                   placeholder="Enter your password"
                   placeholderTextColor={"black"}
-                  secureTextEntry={isPasswordShown}
+                  secureTextEntry={!isPasswordShown}
                   style={{ width: "100%" }}
                   onChangeText={(value) => setPassword(value)}
                 />
@@ -395,9 +398,9 @@ const RegisterScreen = ({ navigation }: any) => {
                   }}
                 >
                   {isPasswordShown === true ? (
-                    <Ionicons name="eye-off" size={24} color={"black"} />
-                  ) : (
                     <Ionicons name="eye" size={24} color={"black"} />
+                  ) : (
+                    <Ionicons name="eye-off" size={24} color={"black"} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -436,7 +439,7 @@ const RegisterScreen = ({ navigation }: any) => {
                 <TextInput
                   placeholder="Enter your password"
                   placeholderTextColor={"black"}
-                  secureTextEntry={isConfirmPasswordShown}
+                  secureTextEntry={!isConfirmPasswordShown}
                   style={{ width: "100%" }}
                   onChangeText={(value) => setConfirmPassword(value)}
                 />
@@ -447,9 +450,9 @@ const RegisterScreen = ({ navigation }: any) => {
                   }}
                 >
                   {isConfirmPasswordShown === true ? (
-                    <Ionicons name="eye-off" size={24} color={"black"} />
-                  ) : (
                     <Ionicons name="eye" size={24} color={"black"} />
+                  ) : (
+                    <Ionicons name="eye-off" size={24} color={"black"} />
                   )}
                 </TouchableOpacity>
               </View>

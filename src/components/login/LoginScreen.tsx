@@ -17,6 +17,7 @@ import axios from "axios";
 import { NavigationProp } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Fontisto";
 import CheckBox from "expo-checkbox";
+import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
   navigation: NavigationProp<any>;
@@ -27,7 +28,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-
+  const [isShowPassword, setIsShowPassword] = useState(false);
   const [checkEmail, setCheckEmail] = useState(true);
   const [errorrPassword, setErrorrPassword] = useState("");
 
@@ -107,12 +108,26 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         </View>
         <View style={styles.group}>
           <Icon name="locked" style={styles.icon} />
-          <TextInput
-            secureTextEntry={true}
-            placeholder="Password"
-            style={styles.ip}
-            onChangeText={(value) => setPassword(value)}
-          ></TextInput>
+          <View>
+            <TextInput
+              secureTextEntry={!isShowPassword}
+              placeholder="Password"
+              style={styles.ip}
+              onChangeText={(value) => setPassword(value)}
+            ></TextInput>
+            <TouchableOpacity
+              style={{ position: "absolute", right: 10, top: 10 }}
+              onPress={() => {
+                setIsShowPassword(!isShowPassword);
+              }}
+            >
+              {isShowPassword === true ? (
+                <Ionicons name="eye" size={24} color={"black"} />
+              ) : (
+                <Ionicons name="eye-off" size={24} color={"black"} />
+              )}
+            </TouchableOpacity>
+          </View>
           <Text style={{ color: "red", marginTop: 10, fontSize: 10 }}>
             {errorrPassword}
           </Text>
@@ -129,11 +144,11 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           </View>
 
           <View>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ForgotPassword')}>
-            <Text style={{ color: "#1bcdff" }}>Forgot password</Text>
-          </TouchableOpacity>
-
+            <TouchableOpacity
+              onPress={() => navigation.navigate("ForgotPassword")}
+            >
+              <Text style={{ color: "#1bcdff" }}>Forgot password</Text>
+            </TouchableOpacity>
           </View>
         </View>
         <TouchableOpacity style={styles.btn} onPress={() => handleLogin()}>
