@@ -59,11 +59,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
   // Hàm thêm comment vào danh sách
   const handleCommentSubmit = () => {
     if (comment.trim()) {
-      const newComment = {
-        id: String(comments.length + 1),
-        user: "Bạn",
-        text: comment,
-      };
+      const newComment = { id: String(comments.length + 1), user: "Bạn", text: comment };
       setComments([...comments, newComment]);
       setComment(""); // Xóa nội dung comment sau khi gửi
     }
@@ -99,10 +95,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
         setIsFavorite(isFav);
       }
     } catch (error) {
-      console.error(
-        "Lỗi khi lấy thông tin người dùng hoặc kiểm tra mục yêu thích:",
-        error
-      );
+      console.error("Lỗi khi lấy thông tin người dùng hoặc kiểm tra mục yêu thích:", error);
     }
   };
   const fetchUserId = async () => {
@@ -125,7 +118,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
       return null;
     }
   };
-
+  
   // Hàm thêm vào mục yêu thích
   const addToFavorite = async () => {
     try {
@@ -134,7 +127,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
         console.error("Không lấy được ID người dùng.");
         return;
       }
-
+  
       const token = await AsyncStorage.getItem("token");
       if (token) {
         const response = await axios.post(
@@ -155,6 +148,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
       console.error("Lỗi khi thêm vào mục yêu thích:", error);
     }
   };
+  
 
   // Hàm xóa khỏi mục yêu thích
   const removeFromFavorite = async () => {
@@ -170,14 +164,14 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
             },
           }
         );
-
+  
         const favoritePosts = favoritesResponse.data;
-
+  
         // Tìm `_id` của mục yêu thích dựa trên `postId`
         const favoriteItem = favoritePosts.find(
           (fav) => fav.id_post === postId
         );
-
+  
         if (favoriteItem && favoriteItem._id) {
           const response = await axios.delete(
             `https://be-android-project.onrender.com/api/favorite/delete/${favoriteItem._id}`,
@@ -196,6 +190,8 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
       console.error("Lỗi khi xóa khỏi mục yêu thích:", error);
     }
   };
+  
+  
 
   // Hàm xử lý khi nhấn vào biểu tượng trái tim
   const handleFavoritePress = () => {
@@ -205,7 +201,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
       addToFavorite(); // Nếu chưa yêu thích, thêm vào danh sách
     }
   };
-
+  
   useEffect(() => {
     const fetchPostDetails = async () => {
       try {
@@ -255,6 +251,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
       <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Hình ảnh căn hộ */}
         {house && (
           <View style={style.backgroundImageContainer}>
             <FlatList
@@ -264,38 +261,45 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
               data={house.images}
               keyExtractor={(_, index) => index.toString()}
               renderItem={({ item }) => (
-                <View style={{ paddingHorizontal: 2 }}>
-                  <Image
-                    style={{
-                      height: 320,
-                      width: 320,
-                      borderRadius: 10,
-                    }}
-                    resizeMode="cover"
-                    source={{ uri: item }}
-                  />
-                </View>
+                <ImageBackground
+                  style={{
+                    height: 450,
+                    width: 450,
+                    borderRadius: 20,
+                  }}
+                  resizeMode="cover"
+                  source={{ uri: item }}
+                >
+                  <View style={style.header}>
+                    <View style={style.headerBtn}>
+                      <Icon
+                        name="arrow-back-ios"
+                        size={23}
+                        onPress={() => navigation.goBack()}
+                      />
+                    </View>
+                  </View>
+                </ImageBackground>
               )}
             />
           </View>
         )}
+
+        {/* Icon và các chức năng */}
         {house && (
           <View style={style.iconContainer}>
             <TouchableOpacity style={style.iconItem}>
-              <Icon name="photo" size={27} color="#0143c7" />
+              <Icon name="photo" size={24} color={COLORS.dark} />
               <Text style={style.iconText}>{house.images.length} Ảnh</Text>
             </TouchableOpacity>
-
             <TouchableOpacity style={style.iconItem}>
-              <Icon name="videocam" size={27} color="#0143c7" />
+              <Icon name="videocam" size={24} color={COLORS.dark} />
               <Text style={style.iconText}>Video</Text>
             </TouchableOpacity>
-
             <TouchableOpacity style={style.iconItem}>
-              <Icon name="map" size={27} color={COLORS.dark} />
+              <Icon name="map" size={24} color={COLORS.dark} />
               <Text style={style.iconText}>Bản đồ</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={style.iconItem}
               onPress={handleFavoritePress}
@@ -307,6 +311,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
               />
               <Text style={style.iconText}>Yêu thích</Text>
             </TouchableOpacity>
+
           </View>
         )}
 
@@ -392,7 +397,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
         <View style={style.separator}></View>
 
         {/* Container cho tiện ích */}
-        <View style={(style.amenitiesContainer, { paddingHorizontal: 20 })}>
+        <View style={style.amenitiesContainer}>
           <Text style={style.amenitiesTitle}>Tiện ích</Text>
           <View style={style.amenitiesList}>
             {house?.amenities &&
@@ -408,9 +413,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
         <View style={style.separator}></View>
 
         {/* Container cho thông tin chi tiết về căn hộ */}
-        <View
-          style={(style.additionalDetailsContainer, { paddingHorizontal: 20 })}
-        >
+        <View style={style.additionalDetailsContainer}>
           <Text style={style.additionalDetailsTitle}>Thông Tin Chi Tiết</Text>
           <Text style={style.detailText}>{house?.description}</Text>
         </View>
@@ -466,16 +469,16 @@ const style = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginHorizontal: 20,
+    marginHorizontal: 23,
     marginTop: 20,
     height: 350,
-    width: "89%",
+    width: "90%",
   },
   headerBtn: {
     height: 40,
     width: 40,
     backgroundColor: "white",
-    borderRadius: 60,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -483,7 +486,7 @@ const style = StyleSheet.create({
     paddingVertical: 20,
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: 10,
+    paddingHorizontal: 10,
   },
   virtualTag: {
     position: "absolute",
@@ -669,8 +672,8 @@ const style = StyleSheet.create({
     paddingHorizontal: 20,
   },
   iconText: {
-    fontSize: 14,
-    fontWeight: "bold",
+    marginTop: 5,
+    fontSize: 13,
     color: "grey",
   },
   commentSection: {
@@ -693,8 +696,6 @@ const style = StyleSheet.create({
   },
   submitBtnText: {
     color: "white",
-    fontWeight: "bold",
-    fontSize: 14,
   },
   commentItem: {
     flexDirection: "row",
