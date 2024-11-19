@@ -105,7 +105,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   };
   const getTopPosts = async () => {
     try {
-      const token = await AsyncStorage.getItem("token");
+const token = await AsyncStorage.getItem("token");
       if (token) {
         const response = await axios.get(
           "https://be-android-project.onrender.com/api/post/top-views", // Gọi API top views
@@ -196,7 +196,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                     style={{ width: "100%" }}
                     value={searchQuery}
                     onChangeText={(value) => setSearchQuery(value)}
-                    onSubmitEditing={handleSearch}
+onSubmitEditing={handleSearch}
                   />
                   <TouchableOpacity
                     style={{ position: "absolute", right: 1 }}
@@ -247,7 +247,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                         source={{
                           uri:
                             itemTops.images && itemTops.images.length > 0
-                              ? itemTops.images[0]
+                              ? itemTops.images[0].url
                               : "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
                         }}
                       />
@@ -274,7 +274,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                           đ{itemTops.price.toLocaleString("vi-VN")} triệu/tháng
                         </Text>
                         <View style={{ flexDirection: "row" }}>
-                          <Text>Rate: {itemTops.averageRating}</Text>
+<Text>Rate: {itemTops.averageRating}</Text>
                           <Entypo
                             name="star"
                             size={17}
@@ -332,7 +332,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                           source={{
                             uri:
                               item.images && item.images.length > 0
-                                ? item.images[0]
+                                ? item.images[0].url
                                 : "https://www.treehugger.com/thmb/JWrVwio-VZbHdPlrbfuLo4Y6RgQ=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/th-house-oddo-architects-6-cc292e3b8a874f9e89893cf60f39b3f1.jpeg",
                           }}
                         />
@@ -350,7 +350,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                         >
                           sales
                         </Text>
-                      </View> */}
+</View> */}
                       <View
                         style={{
                           flexDirection: "column",

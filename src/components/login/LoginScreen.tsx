@@ -38,25 +38,8 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleLogin = async () => {
-    let formData = {
-      _email: email,
-      _password: password,
-      _checkBox: isCheck,
-    };
-    console.log(formData);
-    let regexEmail = new RegExp(
-      /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/
-    );
-    if (regexEmail.test(formData._email)) {
-      setCheckEmail(true);
-    } else {
-      setCheckEmail(false);
-    }
-    formData._password === ""
-      ? setErrorrPassword("Invalid password")
-      : setErrorrPassword("");
-
     setLoading(true);
+  
     try {
       const response = await axios.post(
         "https://be-android-project.onrender.com/api/auth/login",
@@ -66,18 +49,32 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         }
       );
       const { token, user } = response.data;
+  
+      // Lưu token, role và id vào AsyncStorage
       await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("user_role", user.user_role);
+      await AsyncStorage.setItem("user_id", user.id);
+  
+      // Điều hướng dựa vào role
+      if (user.user_role === "Renter") {
+        navigation.navigate("renterTab");
+      } else if (user.user_role === "User") {
+        navigation.navigate("userTab");
+      } else {
+        Alert.alert("Invalid Role", "Your role is not supported.");
+      }
+  
       Alert.alert("Login Successful", `Welcome ${user.username}`);
-      navigation.navigate("tab");
     } catch (error) {
       Alert.alert(
         "Login Failed",
-        error.response?.data?.msg || "An error occurred"
+        error.response?.data?.msg || "An error occurred. Please try again."
       );
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <SafeAreaView style={styles.container}>
