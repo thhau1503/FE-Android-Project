@@ -209,17 +209,18 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           `https://be-android-project.onrender.com/api/post/${postId}`
         );
         setHouse(response.data);
-
+        console.log(house);
         // Gọi hàm lấy thông tin người dùng và kiểm tra yêu thích
         await fetchUserInfo();
 
         // Gọi API để lấy thông tin người cho thuê từ landlord ID
-        const landlordId = response.data.landlord;
+        const landlordId = response.data.landlord._id;
         if (landlordId) {
           const landlordResponse = await axios.get(
             `https://be-android-project.onrender.com/api/auth/user/${landlordId}`
           );
           setLandlord(landlordResponse.data);
+          console.log(landlordResponse.data);
         }
 
         setLoading(false);
@@ -261,25 +262,17 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
               data={house.images}
               keyExtractor={(_, index) => index.toString()}
               renderItem={({ item }) => (
-                <ImageBackground
-                  style={{
-                    height: 450,
-                    width: 450,
-                    borderRadius: 20,
-                  }}
-                  resizeMode="cover"
-                  source={{ uri: item }}
-                >
-                  <View style={style.header}>
-                    <View style={style.headerBtn}>
-                      <Icon
-                        name="arrow-back-ios"
-                        size={23}
-                        onPress={() => navigation.goBack()}
-                      />
-                    </View>
-                  </View>
-                </ImageBackground>
+                <View style={{ paddingHorizontal: 2 }}>
+                  <Image
+                    style={{
+                      height: 320,
+                      width: 320,
+                      borderRadius: 10,
+                    }}
+                    resizeMode="cover"
+                    source={{ uri: item }}
+                  />
+                </View>
               )}
             />
           </View>
@@ -374,8 +367,8 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           <View style={style.ownerContainer}>
             <Image
               source={{
-                uri: landlord.avatar
-                  ? landlord.avatar
+                uri: landlord.avatar.url
+                  ? landlord.avatar.url
                   : "https://th.bing.com/th/id/OIP.U0D5JdoPkQMi4jhiriSVsgHaHa?w=186&h=186&c=7&r=0&o=5&dpr=1.1&pid=1.7",
               }}
               style={style.ownerAvatar}
