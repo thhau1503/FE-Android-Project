@@ -95,7 +95,8 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           }
         );
         const favoritePosts = response.data;
-        const isFav = favoritePosts.some((fav) => fav.id_post === postId);
+        console.log(favoritePosts);
+        const isFav = favoritePosts.some((fav) => fav.id_post._id === postId);
         setIsFavorite(isFav);
       }
     } catch (error) {
@@ -117,7 +118,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
             },
           }
         );
-        const userId = response.data.id; // Lấy id_user_rent từ response
+        const userId = response.data._id; // Lấy id_user_rent từ response
         return userId;
       }
     } catch (error) {
@@ -175,7 +176,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
 
         // Tìm `_id` của mục yêu thích dựa trên `postId`
         const favoriteItem = favoritePosts.find(
-          (fav) => fav.id_post === postId
+          (fav) => fav.id_post._id === postId
         );
 
         if (favoriteItem && favoriteItem._id) {
