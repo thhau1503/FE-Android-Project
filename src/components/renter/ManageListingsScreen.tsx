@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,128 +6,124 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 
 const ManageListingsScreen = () => {
-  const listings = [
-    {
-      id: "1",
-      title: "Phòng trọ cao cấp quận 7",
-      description: "Phòng trọ đầy đủ tiện nghi, có bể bơi riêng.",
-      price: 5000000,
-      size: 50,
-      location: "202 Đường Nguyễn Văn Linh, Tân Phú, Quận 7, TP Hồ Chí Minh",
-      roomType: "Apartment",
-      amenities: [
-        { name: "Wifi", icon: "📶" },
-        { name: "Điều hòa", icon: "❄️" },
-        { name: "Bếp", icon: "🍳" },
-        { name: "Thang máy", icon: "🛗" },
-      ],
-      additionalCosts: {
-        electricity: 600000,
-        water: 300000,
-        internet: 400000,
-        cleaning: 200000,
-      },
-      rating: 4.8,
-      views: 220,
-      image:
-        "https://i.pinimg.com/736x/42/2c/61/422c61b6424ca1afa52395f78032750a.jpg",
-    },
-    {
-      id: "2",
-      title: "Phòng trọ gần chợ Bến Thành",
-      description: "Phòng trọ sạch sẽ, đầy đủ tiện nghi, gần chợ.",
-      price: 3000000,
-      size: 25,
-      location:
-        "456 Đường Nguyễn An Ninh, Bến Thành, Quận 1, TP Hồ Chí Minh",
-      roomType: "Double",
-      amenities: [
-        { name: "Wifi", icon: "📶" },
-        { name: "Điều hòa", icon: "❄️" },
-        { name: "Bếp", icon: "🍳" },
-        { name: "Đỗ xe", icon: "🚗" },
-        { name: "Thang máy", icon: "🛗" },
-      ],
-      additionalCosts: {
-        electricity: 400000,
-        water: 150000,
-        internet: 200000,
-        cleaning: 0,
-      },
-      rating: 4.3,
-      views: 150,
-      image:
-        "https://i.pinimg.com/736x/42/2c/61/422c61b6424ca1afa52395f78032750a.jpg",
-    },
-  ];
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const landlordId = "66f3e51e32c1888b7b514852";
+
+  const fetchListings = async () => {
+    try {
+      const response = await fetch(
+        `https://be-android-project.onrender.com/api/post/landlord/${landlordId}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setListings(data);
+      } else {
+        console.error("Lỗi khi lấy danh sách bài đăng:", response.status);
+      }
+    } catch (error) {
+      console.error("Lỗi khi gọi API:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchListings();
+  }, []);
 
   const renderListing = (item) => (
-    <View key={item.id} style={styles.card}>
-      <Image source={{ uri: item.image }} style={styles.image} />
+    <View key={item.id || Math.random()} style={styles.card}>
+      <Image
+        source={{ uri: item.images?.[0]?.url || "https://via.placeholder.com/150" }}
+        style={styles.image}
+      />
 
       <View style={styles.header}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.description}>{item.description}</Text>
-      </View>
-
-      <View style={styles.priceContainer}>
+        <Text style={styles.title}>{item.title || "Không có tiêu đề"}</Text>
         <Text style={styles.price}>
-          {item.price.toLocaleString("vi-VN")} VND
+          {item.price ? item.price.toLocaleString("vi-VN") : "Chưa xác định"} VND
         </Text>
-        <Text style={styles.size}>{item.size} m²</Text>
       </View>
 
-      <View style={styles.infoRow}>
-        <MaterialIcons name="location-on" size={16} color="#555" />
-        <Text style={styles.infoText}>{item.location}</Text>
-      </View>
-
-      <View style={styles.infoRow}>
-        <FontAwesome name="home" size={16} color="#555" />
-        <Text style={styles.infoText}>Loại phòng: {item.roomType}</Text>
+      <View style={styles.details}>
+        <View style={styles.infoRow}>
+          <MaterialIcons name="location-on" size={16} color="#555" />
+          <Text style={styles.infoText}>
+            {item.location?.address || "Địa chỉ không xác định"}, {item.location?.district},{" "}
+            {item.location?.city}
+          </Text>
+        </View>
+        <View style={styles.infoRow}>
+          <FontAwesome name="home" size={16} color="#555" />
+          <Text style={styles.infoText}>Loại phòng: {item.roomType || "Không xác định"}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <FontAwesome name="area-chart" size={16} color="#555" />
+          <Text style={styles.infoText}>
+            Diện tích: {item.size ? `${item.size} m²` : "Không xác định"}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>Tiện nghi:</Text>
         <View style={styles.amenitiesContainer}>
-          {item.amenities.length > 0 ? (
-            item.amenities.map((amenity, index) => (
-              <Text key={index} style={styles.amenityText}>
-                {amenity.icon} {amenity.name}
-              </Text>
-            ))
-          ) : (
-            <Text style={styles.noAmenities}>Không có tiện nghi</Text>
-          )}
+          {Object.entries(item.amenities || {}).map(([key, value], index) => {
+            if (value) {
+              return (
+                <View key={index} style={styles.amenityItem}>
+                  <FontAwesome name="check-circle" size={16} color="#32CD32" />
+                  <Text style={styles.amenityText}>{key}</Text>
+                </View>
+              );
+            }
+            return null;
+          })}
         </View>
       </View>
 
       <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>Chi phí thêm:</Text>
         <Text style={styles.costText}>
-          💡 Điện: {item.additionalCosts.electricity.toLocaleString("vi-VN")}{" "}
+          💡 Điện:{" "}
+          {item.additionalCosts?.electricity
+            ? item.additionalCosts.electricity.toLocaleString("vi-VN")
+            : "Không xác định"}{" "}
           VND
         </Text>
         <Text style={styles.costText}>
-          💧 Nước: {item.additionalCosts.water.toLocaleString("vi-VN")} VND
-        </Text>
-        <Text style={styles.costText}>
-          🌐 Internet: {item.additionalCosts.internet.toLocaleString("vi-VN")}{" "}
+          💧 Nước:{" "}
+          {item.additionalCosts?.water
+            ? item.additionalCosts.water.toLocaleString("vi-VN")
+            : "Không xác định"}{" "}
           VND
         </Text>
         <Text style={styles.costText}>
-          🧹 Dọn dẹp: {item.additionalCosts.cleaning.toLocaleString("vi-VN")}{" "}
+          🌐 Internet:{" "}
+          {item.additionalCosts?.internet
+            ? item.additionalCosts.internet.toLocaleString("vi-VN")
+            : "Không xác định"}{" "}
+          VND
+        </Text>
+        <Text style={styles.costText}>
+          🧹 Dọn dẹp:{" "}
+          {item.additionalCosts?.cleaning
+            ? item.additionalCosts.cleaning.toLocaleString("vi-VN")
+            : "Không xác định"}{" "}
           VND
         </Text>
       </View>
 
       <View style={styles.footer}>
-        <Text>⭐ {item.rating}/5</Text>
-        <Text>👁️ {item.views} lượt xem</Text>
+        <Text style={styles.rating}>⭐ {item.averageRating || 0}/5</Text>
+        <Text style={styles.views}>👁️ {item.views || 0} lượt xem</Text>
       </View>
 
       <View style={styles.actionButtons}>
@@ -144,7 +140,13 @@ const ManageListingsScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.headerTitle}>Danh sách bài đăng của bạn</Text>
-      {listings.map((item) => renderListing(item))}
+      {loading ? (
+        <ActivityIndicator size="large" color="#007BFF" />
+      ) : listings.length > 0 ? (
+        listings.map((item) => renderListing(item))
+      ) : (
+        <Text style={styles.noDataText}>Không có bài đăng nào.</Text>
+      )}
     </ScrollView>
   );
 };
@@ -156,17 +158,18 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
-    marginVertical: 10,
+    marginBottom: 15,
     textAlign: "center",
+    color: "#007BFF",
   },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 10,
+    borderRadius: 15,
     marginBottom: 15,
     padding: 15,
-    elevation: 3,
+    elevation: 5,
     borderWidth: 1,
     borderColor: "#ddd",
   },
@@ -182,25 +185,21 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "bold",
+    color: "#333",
+  },
+  price: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#FF4500",
+    marginTop: 5,
   },
   description: {
     fontSize: 14,
     color: "#555",
     marginTop: 5,
   },
-  priceContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 10,
-  },
-  price: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1bcdff",
-  },
-  size: {
-    fontSize: 16,
-    color: "#333",
+  details: {
+    marginBottom: 10,
   },
   infoRow: {
     flexDirection: "row",
@@ -209,7 +208,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: "#666",
+    color: "#555",
     marginLeft: 5,
   },
   sectionContainer: {
@@ -217,8 +216,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
   },
   sectionTitle: {
     fontWeight: "bold",
@@ -229,14 +226,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
   },
-  amenityText: {
-    fontSize: 14,
-    marginRight: 10,
-    marginBottom: 5,
+  amenityItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 15,
+    marginBottom: 10,
   },
-  noAmenities: {
+  amenityText: {
+    marginLeft: 5,
     fontSize: 14,
-    color: "#999",
+    color: "#333",
   },
   costText: {
     fontSize: 14,
@@ -246,6 +245,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 15,
+  },
+  rating: {
+    fontSize: 14,
+    color: "#FFD700",
+  },
+  views: {
+    fontSize: 14,
+    color: "#555",
+  },
+  noDataText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "#999",
   },
   actionButtons: {
     flexDirection: "row",

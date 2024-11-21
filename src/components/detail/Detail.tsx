@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import axios from "axios";
+import { Video, ResizeMode } from "expo-av";
 
 const { width } = Dimensions.get("screen");
 
@@ -47,6 +48,8 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
   const [comment, setComment] = useState<string>("");
   const [isFavorite, setIsFavorite] = useState(false); // Trạng thái yêu thích
   const [userId, setUserId] = useState<string>(""); // Lưu trữ userId
+  const [viewMode, setViewMode] = useState("images"); // 'images' hoặc 'video'
+  const [isVideoSelected, setIsVideoSelected] = useState(false); 
 
   const [comments, setComments] = useState([
     {
@@ -95,7 +98,8 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           }
         );
         const favoritePosts = response.data;
-        const isFav = favoritePosts.some((fav) => fav.id_post === postId);
+        console.log(favoritePosts);
+        const isFav = favoritePosts.some((fav) => fav.id_post._id === postId);
         setIsFavorite(isFav);
       }
     } catch (error) {
@@ -171,7 +175,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           }
         );
 
-        const favoritePosts = favoritesResponse.data._id;
+        const favoritePosts = favoritesResponse.data;
 
         // Tìm `_id` của mục yêu thích dựa trên `postId`
         const favoriteItem = favoritePosts.find(
@@ -258,37 +262,72 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
       <ScrollView showsVerticalScrollIndicator={false}>
         {house && (
           <View style={style.backgroundImageContainer}>
-            <FlatList
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              data={house.images}
-              keyExtractor={(_, index) => index.toString()}
-              renderItem={({ item }) => (
-                <View style={{ paddingHorizontal: 2 }}>
-                  <Image
-                    style={{
-                      height: 320,
-                      width: 320,
-                      borderRadius: 10,
-                    }}
-                    resizeMode="cover"
-                    source={{ uri: item.url }}
-                  />
-                </View>
-              )}
-            />
+            {viewMode === "images" ? (
+              <FlatList
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                data={house.images}
+                keyExtractor={(_, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <View style={{ paddingHorizontal: 2 }}>
+                    <Image
+                      style={{
+                        height: 320,
+                        width: 320,
+                        borderRadius: 10,
+                      }}
+                      resizeMode="cover"
+                      source={{ uri: item.url }}
+                    />
+                  </View>
+                )}
+              />
+            ) : house.video ? (
+              <Video
+  source={{ uri: house.video.url }}
+  style={{
+    height: 320,
+    width: 320,
+    borderRadius: 10,
+  }}
+  useNativeControls
+  resizeMode={"contain" as ResizeMode} // Cast 'contain' as ResizeMode
+  onError={(error) => console.error("Error Loading Video: ", error)}
+  onPlaybackStatusUpdate={(status) => console.log("Playback Status: ", status)}
+/>
+
+            ) : (
+              <View style={style.noVideoContainer}>
+                <Text style={style.noVideoText}>Không có video</Text>
+              </View>
+            )}
           </View>
         )}
+
         {house && (
           <View style={style.iconContainer}>
-            <TouchableOpacity style={style.iconItem}>
-              <Icon name="photo" size={27} color="#0143c7" />
+            <TouchableOpacity
+              style={style.iconItem}
+              onPress={() => setViewMode("images")}
+            >
+              <Icon
+                name="photo"
+                size={27}
+                color={viewMode === "images" ? COLORS.blue : COLORS.grey}
+              />
               <Text style={style.iconText}>{house.images.length} Ảnh</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={style.iconItem}>
-              <Icon name="videocam" size={27} color="#0143c7" />
+            <TouchableOpacity
+              style={style.iconItem}
+              onPress={() => setViewMode("video")}
+            >
+              <Icon
+                name="videocam"
+                size={27}
+                color={viewMode === "video" ? COLORS.blue : COLORS.grey}
+              />
               <Text style={style.iconText}>Video</Text>
             </TouchableOpacity>
 
@@ -311,61 +350,48 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           </View>
         )}
 
-        {/* Đường kẻ ngang */}
         <View style={style.separator}></View>
 
-        {/* Container cho thông tin chi tiết */}
-        <View style={style.detailsContainer}>
-          {/* Ngôi sao và tiêu đề trọ */}
-          <View style={style.titleContainer}>
-            <View style={style.starContainer}>
-              {[...Array(5)].map((_, index) => (
-                <Icon key={index} name="star" size={18} color="gold" />
-              ))}
+        {house && (
+          <View style={style.detailsContainer}>
+            <View style={style.titleContainer}>
+              <View style={style.starContainer}>
+                {[...Array(5)].map((_, index) => (
+                  <Icon key={index} name="star" size={18} color="gold" />
+                ))}
+              </View>
+              <Text style={style.houseTitle}>{house.title}</Text>
             </View>
-            <Text style={style.houseTitle}>{house?.title}</Text>
-          </View>
 
-          {/* Địa chỉ */}
-          <View style={style.addressContainer}>
-            <Icon name="location-pin" size={18} color="gray" />
-            <View
-              style={{
-                flex: 1,
-                flexWrap: "wrap",
-                flexDirection: "row",
-              }}
-            >
+            <View style={style.addressContainer}>
+              <Icon name="location-pin" size={18} color="gray" />
               <Text style={[style.address, { flexWrap: "wrap" }]}>
-                {house?.location.address}, {house?.location.ward},
-                {house?.location.district}, {house?.location.city}
+                {house.location.address}, {house.location.ward},{" "}
+                {house.location.district}, {house.location.city}
               </Text>
             </View>
-          </View>
 
-          {/* Giá, diện tích, và thời gian */}
-          <View style={style.additionalInfoContainer}>
-            <View style={style.infoItem}>
-              <Icon name="attach-money" size={18} color="green" />
-              <Text style={style.price}>
-                {house?.price.toLocaleString("vi-VN")} triệu/tháng
-              </Text>
-            </View>
-            <View style={style.infoItem}>
-              <Icon name="square-foot" size={18} color="gray" />
-              <Text style={style.area}>{house?.size} m²</Text>
-            </View>
-            <View style={style.infoItem}>
-              <Icon name="schedule" size={18} color="gray" />
-              <Text style={style.timePosted}>49 phút trước</Text>
+            <View style={style.additionalInfoContainer}>
+              <View style={style.infoItem}>
+                <Icon name="attach-money" size={18} color="green" />
+                <Text style={style.price}>
+                  {house.price.toLocaleString("vi-VN")} triệu/tháng
+                </Text>
+              </View>
+              <View style={style.infoItem}>
+                <Icon name="square-foot" size={18} color="gray" />
+                <Text style={style.area}>{house.size} m²</Text>
+              </View>
+              <View style={style.infoItem}>
+                <Icon name="schedule" size={18} color="gray" />
+                <Text style={style.timePosted}>49 phút trước</Text>
+              </View>
             </View>
           </View>
-        </View>
+        )}
 
-        {/* Đường kẻ ngang */}
         <View style={style.separator}></View>
 
-        {/* Thêm thông tin chủ nhà trọ */}
         {landlord && (
           <View style={style.ownerContainer}>
             <Image
@@ -389,37 +415,35 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           </View>
         )}
 
-        {/* Đường kẻ ngang */}
         <View style={style.separator}></View>
 
-        {/* Container cho tiện ích */}
-        <View style={(style.amenitiesContainer, { paddingHorizontal: 20 })}>
-          <Text style={style.amenitiesTitle}>Tiện ích</Text>
-          <View style={style.amenitiesList}>
-            {house?.amenities &&
-              Object.keys(house.amenities).map((key, index) => (
-                <Text key={index} style={style.amenityItem}>
-                  {key}
-                </Text>
-              ))}
+        {house && (
+          <View style={(style.amenitiesContainer, { paddingHorizontal: 20 })}>
+            <Text style={style.amenitiesTitle}>Tiện ích</Text>
+            <View style={style.amenitiesList}>
+              {house.amenities &&
+                Object.keys(house.amenities).map((key, index) => (
+                  <Text key={index} style={style.amenityItem}>
+                    {key}
+                  </Text>
+                ))}
+            </View>
           </View>
-        </View>
+        )}
 
-        {/* Đường kẻ ngang */}
         <View style={style.separator}></View>
 
-        {/* Container cho thông tin chi tiết về căn hộ */}
-        <View
-          style={(style.additionalDetailsContainer, { paddingHorizontal: 20 })}
-        >
-          <Text style={style.additionalDetailsTitle}>Thông Tin Chi Tiết</Text>
-          <Text style={style.detailText}>{house?.description}</Text>
-        </View>
+        {house && (
+          <View
+            style={(style.additionalDetailsContainer, { paddingHorizontal: 20 })}
+          >
+            <Text style={style.additionalDetailsTitle}>Thông Tin Chi Tiết</Text>
+            <Text style={style.detailText}>{house.description}</Text>
+          </View>
+        )}
 
-        {/* Đường kẻ ngang */}
         <View style={style.separator}></View>
 
-        {/* Container cho bình luận */}
         <View style={style.commentSection}>
           <TextInput
             style={style.commentInput}
@@ -446,14 +470,23 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
         ))}
       </ScrollView>
 
-      {/* Button Container */}
       <View style={style.buttonContainer}>
-      <TouchableOpacity
-    style={style.bookNowBtn}
-    onPress={() => navigation.navigate("booking")} // Điều hướng đến BookingScreen
-  >
-    <Text style={{ color: COLORS.white }}>Đặt Phòng</Text>
-  </TouchableOpacity>
+        <TouchableOpacity
+          style={style.bookNowBtn}
+          onPress={() => {
+            navigation.navigate("booking", {
+              postId: house?._id,
+              landlordId: house?.landlord?._id,
+              userId: userId,
+              title: house?.title,
+              image: house?.images[0]?.url,
+              price: house?.price,
+            });
+          }}
+        >
+          <Text style={{ color: COLORS.white }}>Đặt Phòng</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={style.circleButton}>
           <Icon name="message" size={20} color={COLORS.dark} />
         </TouchableOpacity>
@@ -463,6 +496,8 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
       </View>
     </SafeAreaView>
   );
+
+  
 };
 
 const style = StyleSheet.create({
@@ -761,6 +796,23 @@ const style = StyleSheet.create({
     fontSize: 16,
     color: COLORS.blue,
   },
+  video: {
+    width: width,
+    height: 300,
+    backgroundColor: COLORS.grey,
+  },
+  noVideoContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    height: 300,
+    backgroundColor: COLORS.grey,
+  },
+  noVideoText: {
+    color: COLORS.red,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  
 });
 
 export default Detail;
