@@ -94,7 +94,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
             },
           }
         );
-        const favoritePosts = response.data._id;
+        const favoritePosts = response.data;
         const isFav = favoritePosts.some((fav) => fav.id_post === postId);
         setIsFavorite(isFav);
       }
@@ -175,7 +175,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
 
         // Tìm `_id` của mục yêu thích dựa trên `postId`
         const favoriteItem = favoritePosts.find(
-          (fav) => fav.id_post === postId
+          (fav) => fav.id_post._id === postId
         );
 
         if (favoriteItem && favoriteItem._id) {
