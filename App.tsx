@@ -20,7 +20,7 @@ import Detail from "./src/components/detail/Detail";
 import Notification from "./src/components/notify/Notificaion";
 import ForgotPasswordScreen from "./src/components/login/ForgotPasswordScreen";
 import VerifyOTPScreen from "./src/components/login/VerifyOTPScreen";
-
+import BookingScreen from "./src/components/book/BookingScreen";
 const Stack = createStackNavigator();
 
 const App: React.FC = () => {
@@ -104,6 +104,7 @@ const App: React.FC = () => {
         />
         <Stack.Screen name="VerifyOTP" component={VerifyOTPScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+        <Stack.Screen name="booking" component={BookingScreen} />
 
         {/* Other Screens */}
         <Stack.Screen name="profile" component={ProfileScreen} />

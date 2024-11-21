@@ -105,7 +105,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   };
   const getTopPosts = async () => {
     try {
-const token = await AsyncStorage.getItem("token");
+      const token = await AsyncStorage.getItem("token");
       if (token) {
         const response = await axios.get(
           "https://be-android-project.onrender.com/api/post/top-views", // Gọi API top views
@@ -196,7 +196,7 @@ const token = await AsyncStorage.getItem("token");
                     style={{ width: "100%" }}
                     value={searchQuery}
                     onChangeText={(value) => setSearchQuery(value)}
-onSubmitEditing={handleSearch}
+                    onSubmitEditing={handleSearch}
                   />
                   <TouchableOpacity
                     style={{ position: "absolute", right: 1 }}
@@ -274,7 +274,7 @@ onSubmitEditing={handleSearch}
                           đ{itemTops.price.toLocaleString("vi-VN")} triệu/tháng
                         </Text>
                         <View style={{ flexDirection: "row" }}>
-<Text>Rate: {itemTops.averageRating}</Text>
+                          <Text>Rate: {itemTops.averageRating}</Text>
                           <Entypo
                             name="star"
                             size={17}
@@ -350,7 +350,7 @@ onSubmitEditing={handleSearch}
                         >
                           sales
                         </Text>
-</View> */}
+                      </View> */}
                       <View
                         style={{
                           flexDirection: "column",
