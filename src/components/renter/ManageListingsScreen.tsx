@@ -9,13 +9,45 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ManageListingsScreen = () => {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const landlordId = "66f3e51e32c1888b7b514852";
+  const [landlordId, setLandlordId] = useState(null);
 
+  // Fetch landlordId and user info
+  const fetchUserProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        const response = await axios.get(
+          "https://be-android-project.onrender.com/api/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log("User profile:", response.data);
+        setLandlordId(response.data._id);
+      } else {
+        throw new Error("Token not found");
+      }
+    } catch (error) {
+      if (error.response && error.response.data.msg === "Token is not valid") {
+        await AsyncStorage.removeItem("token");
+      } else {
+        console.error("Error fetching user profile:", error);
+      }
+    }
+  };
+
+  // Fetch listings based on landlordId
   const fetchListings = async () => {
+    if (!landlordId) return;
+
     try {
       const response = await fetch(
         `https://be-android-project.onrender.com/api/post/landlord/${landlordId}`
@@ -25,18 +57,28 @@ const ManageListingsScreen = () => {
         const data = await response.json();
         setListings(data);
       } else {
-        console.error("Lỗi khi lấy danh sách bài đăng:", response.status);
+        console.error("Error fetching listings:", response.status);
       }
     } catch (error) {
-      console.error("Lỗi khi gọi API:", error);
+      console.error("Error calling API:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchListings();
+    // Fetch user profile and then listings
+    const initialize = async () => {
+      await fetchUserProfile();
+    };
+    initialize();
   }, []);
+
+  useEffect(() => {
+    if (landlordId) {
+      fetchListings();
+    }
+  }, [landlordId]);
 
   const renderListing = (item) => (
     <View key={item.id || Math.random()} style={styles.card}>
@@ -150,7 +192,6 @@ const ManageListingsScreen = () => {
     </ScrollView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

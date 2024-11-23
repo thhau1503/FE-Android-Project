@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,11 +6,11 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Button,
   Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { Picker } from "@react-native-picker/picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 const AddListingScreen = () => {
   const [title, setTitle] = useState("");
@@ -27,15 +27,45 @@ const AddListingScreen = () => {
   const [waterCost, setWaterCost] = useState("");
   const [internetCost, setInternetCost] = useState("");
   const [cleaningCost, setCleaningCost] = useState("");
-  const [wifi, setWifi] = useState(false);
-  const [airConditioner, setAirConditioner] = useState(false);
-  const [heater, setHeater] = useState(false);
-  const [kitchen, setKitchen] = useState(false);
-  const [parking, setParking] = useState(false);
-  const [images, setImages] = useState([]); // Lưu danh sách hình ảnh
-  const [videoUrl, setVideoUrl] = useState(""); // URL video
+  const [securityCost, setSecurityCost] = useState("");
+  const [landlordId, setLandlordId] = useState(null);
 
-  // Hàm chọn nhiều hình ảnh
+  const [amenities, setAmenities] = useState({
+    wifi: false,
+    airConditioner: false,
+    heater: false,
+    kitchen: false,
+    parking: false,
+  });
+
+  const [images, setImages] = useState([]);
+  const [videos, setVideos] = useState([]);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        const response = await axios.get(
+          "https://be-android-project.onrender.com/api/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setLandlordId(response.data._id);
+      } else {
+        Alert.alert("Lỗi", "Token không tồn tại, vui lòng đăng nhập lại!");
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin người dùng:", error);
+    }
+  };
+
   const pickImages = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -50,20 +80,61 @@ const AddListingScreen = () => {
     });
 
     if (!result.canceled && result.assets) {
-      const selectedImages = result.assets.map((asset) => asset.uri);
+      const selectedImages = result.assets.map((asset) => ({
+        uri: asset.uri,
+        type: "image/jpeg",
+        name: asset.uri.split("/").pop(),
+      }));
       setImages((prevImages) => [...prevImages, ...selectedImages]);
     }
   };
 
-  // Hàm chuyển đổi URI thành Blob
-  const uriToBlob = async (uri: string) => {
-    const response = await fetch(uri);
-    const blob = await response.blob();
-    return blob;
+  const pickVideos = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert("Bạn cần cấp quyền truy cập thư viện để tải lên video!");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      allowsMultipleSelection: true,
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets) {
+      const selectedVideos = result.assets.map((asset) => ({
+        uri: asset.uri,
+        type: "video/mp4",
+        name: asset.uri.split("/").pop(),
+      }));
+      setVideos((prevVideos) => [...prevVideos, ...selectedVideos]);
+    }
   };
 
-  // Hàm gửi dữ liệu
+  const removeImage = (index) => {
+    const updatedImages = images.filter((_, i) => i !== index);
+    setImages(updatedImages);
+  };
+
+  const removeVideo = (index) => {
+    const updatedVideos = videos.filter((_, i) => i !== index);
+    setVideos(updatedVideos);
+  };
+
+  const handleToggleAmenity = (key) => {
+    setAmenities((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
   const handleSubmit = async () => {
+    if (!landlordId) {
+      Alert.alert("Lỗi", "Không thể lấy ID người cho thuê. Vui lòng thử lại!");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
@@ -77,19 +148,11 @@ const AddListingScreen = () => {
         ward,
       })
     );
+    formData.append("landlord", landlordId);
     formData.append("roomType", roomType);
     formData.append("size", area);
-    formData.append("availability", availability.toString());
-    formData.append(
-      "amenities",
-      JSON.stringify({
-        wifi,
-        airConditioner,
-        heater,
-        kitchen,
-        parking,
-      })
-    );
+    formData.append("availability", availability);
+    formData.append("amenities", JSON.stringify(amenities));
     formData.append(
       "additionalCosts",
       JSON.stringify({
@@ -97,18 +160,25 @@ const AddListingScreen = () => {
         water: waterCost,
         internet: internetCost,
         cleaning: cleaningCost,
+        security: securityCost,
       })
     );
 
-    // Thêm hình ảnh vào FormData
-    for (const image of images) {
-      const blob = await uriToBlob(image); // Chuyển đổi URI thành Blob
-      formData.append("images", blob, "image.jpg");
-    }
+    images.forEach((image) => {
+      formData.append("images", {
+        uri: image.uri,
+        type: image.type,
+        name: image.name,
+      });
+    });
 
-    if (videoUrl) {
-      formData.append("videos", videoUrl);
-    }
+    videos.forEach((video) => {
+      formData.append("videos", {
+        uri: video.uri,
+        type: video.type,
+        name: video.name,
+      });
+    });
 
     try {
       const response = await fetch(
@@ -116,7 +186,7 @@ const AddListingScreen = () => {
         {
           method: "POST",
           headers: {
-            "Content-Type": "multipart/form-data",
+            Accept: "application/json",
           },
           body: formData,
         }
@@ -125,13 +195,13 @@ const AddListingScreen = () => {
       if (response.ok) {
         const result = await response.json();
         Alert.alert("Thành công", "Tạo bài viết thành công!");
-        console.log(result);
       } else {
         const errorText = await response.text();
+        console.error("API Error:", errorText);
         Alert.alert("Thất bại", `Lỗi: ${errorText}`);
       }
     } catch (error) {
-      console.error("Lỗi khi gọi API:", error);
+      console.error("Network Error:", error);
       Alert.alert("Thất bại", "Đã xảy ra lỗi khi gọi API.");
     }
   };
@@ -166,6 +236,15 @@ const AddListingScreen = () => {
         onChangeText={setPrice}
       />
 
+      <Text style={styles.label}>Diện tích (m²)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nhập diện tích"
+        keyboardType="numeric"
+        value={area}
+        onChangeText={setArea}
+      />
+
       <Text style={styles.label}>Địa chỉ</Text>
       <TextInput
         style={styles.input}
@@ -198,6 +277,25 @@ const AddListingScreen = () => {
         onChangeText={setCity}
       />
 
+      <Text style={styles.label}>Tiện nghi</Text>
+      <View style={styles.checkboxContainer}>
+        {Object.keys(amenities).map((key) => (
+          <TouchableOpacity
+            key={key}
+            style={styles.checkboxRow}
+            onPress={() => handleToggleAmenity(key)}
+          >
+            <View
+              style={[
+                styles.checkbox,
+                amenities[key] && styles.checkboxSelected,
+              ]}
+            />
+            <Text style={styles.checkboxLabel}>{key}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <Text style={styles.label}>Chi phí bổ sung</Text>
       <TextInput
         style={styles.input}
@@ -227,20 +325,39 @@ const AddListingScreen = () => {
         value={cleaningCost}
         onChangeText={setCleaningCost}
       />
-
-      <Text style={styles.label}>Hình ảnh</Text>
-      <Button title="Chọn hình ảnh" onPress={pickImages} />
-      {images.map((image, index) => (
-        <Text key={index}>{image}</Text>
-      ))}
-
-      <Text style={styles.label}>Video (URL)</Text>
       <TextInput
         style={styles.input}
-        placeholder="Nhập URL video"
-        value={videoUrl}
-        onChangeText={setVideoUrl}
+        placeholder="Chi phí bảo vệ"
+        keyboardType="numeric"
+        value={securityCost}
+        onChangeText={setSecurityCost}
       />
+
+      <Text style={styles.label}>Hình ảnh</Text>
+      <TouchableOpacity style={styles.imagePickerButton} onPress={pickImages}>
+        <Text style={styles.imagePickerText}>Chọn hình ảnh</Text>
+      </TouchableOpacity>
+      {images.map((image, index) => (
+        <View key={index} style={styles.imagePreview}>
+          <Text>{image.name}</Text>
+          <TouchableOpacity onPress={() => removeImage(index)}>
+            <Text style={styles.removeButton}>Xóa</Text>
+          </TouchableOpacity>
+        </View>
+      ))}
+
+      <Text style={styles.label}>Video</Text>
+      <TouchableOpacity style={styles.imagePickerButton} onPress={pickVideos}>
+        <Text style={styles.imagePickerText}>Chọn Video</Text>
+      </TouchableOpacity>
+      {videos.map((video, index) => (
+        <View key={index} style={styles.imagePreview}>
+          <Text>{video.name}</Text>
+          <TouchableOpacity onPress={() => removeVideo(index)}>
+            <Text style={styles.removeButton}>Xóa</Text>
+          </TouchableOpacity>
+        </View>
+      ))}
 
       <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
         <Text style={styles.submitText}>Tạo bài viết</Text>
@@ -250,46 +367,21 @@ const AddListingScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    padding: 10,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 10,
-  },
-  label: {
-    fontSize: 16,
-    marginVertical: 5,
-    fontWeight: "500",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: "top",
-  },
-  submitButton: {
-    backgroundColor: "#007BFF",
-    padding: 15,
-    borderRadius: 5,
-    alignItems: "center",
-    marginVertical: 20,
-  },
-  submitText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
+  container: { flex: 1, backgroundColor: "#fff", padding: 10 },
+  header: { fontSize: 24, fontWeight: "bold", textAlign: "center", marginVertical: 10 },
+  label: { fontSize: 16, marginVertical: 5 },
+  input: { borderWidth: 1, borderColor: "#ddd", borderRadius: 5, padding: 10, marginBottom: 10 },
+  textArea: { height: 80, textAlignVertical: "top" },
+  checkboxContainer: { marginVertical: 10 },
+  checkboxRow: { flexDirection: "row", alignItems: "center", marginVertical: 5 },
+  checkbox: { width: 20, height: 20, borderWidth: 1, borderColor: "#ddd", marginRight: 10, backgroundColor: "#fff" },
+  checkboxSelected: { backgroundColor: "#007BFF" },
+  checkboxLabel: { fontSize: 16 },
+  imagePickerButton: { backgroundColor: "#f0f0f0", padding: 10, borderRadius: 5, alignItems: "center", marginVertical: 10 },
+  imagePreview: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginVertical: 5 },
+  removeButton: { color: "red", fontWeight: "bold" },
+  submitButton: { backgroundColor: "#007BFF", padding: 15, borderRadius: 5, alignItems: "center", marginVertical: 20 },
+  submitText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });
 
 export default AddListingScreen;
