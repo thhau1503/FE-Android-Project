@@ -109,9 +109,8 @@ const EditListingScreen = ({ route, navigation }) => {
     }
   };
 
-  const removeMedia = (index, setMedia, media) => {
-    const updatedMedia = media.filter((_, i) => i !== index);
-    setMedia(updatedMedia);
+  const removeMedia = (index, setMedia) => {
+    setMedia((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleUpdate = async () => {
@@ -248,7 +247,7 @@ const EditListingScreen = ({ route, navigation }) => {
         <View key={index} style={styles.mediaPreview}>
           <Image source={{ uri: image.url }} style={styles.image} />
           <TouchableOpacity
-            onPress={() => removeMedia(index, setImages, images)}
+            onPress={() => removeMedia(index, setImages)}
           >
             <Text style={styles.removeButton}>Xóa</Text>
           </TouchableOpacity>
@@ -267,7 +266,7 @@ const EditListingScreen = ({ route, navigation }) => {
         <View key={index} style={styles.mediaPreview}>
           <Text>{video.url}</Text>
           <TouchableOpacity
-            onPress={() => removeMedia(index, setVideos, videos)}
+            onPress={() => removeMedia(index, setVideos)}
           >
             <Text style={styles.removeButton}>Xóa</Text>
           </TouchableOpacity>

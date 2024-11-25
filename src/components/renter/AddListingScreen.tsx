@@ -126,7 +126,7 @@ const AddListingScreen = () => {
       Alert.alert("Lỗi", "Không thể lấy ID người cho thuê. Vui lòng thử lại!");
       return;
     }
-
+  
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
@@ -155,23 +155,21 @@ const AddListingScreen = () => {
         security: securityCost,
       })
     );
-
-    images.forEach((image) => {
-      formData.append("images", {
-        uri: image.uri,
-        type: "image/jpeg",
-        name: image.name,
-      });
-    });
-
-    videos.forEach((video) => {
-      formData.append("videos", {
-        uri: video.uri,
-        type: "video/mp4",
-        name: video.name,
-      });
-    });
-
+  
+    // Xử lý hình ảnh
+    for (const image of images) {
+      const response = await fetch(image.uri);
+      const blob = await response.blob();
+      formData.append("images", blob, image.name);
+    }
+  
+    // Xử lý video
+    for (const video of videos) {
+      const response = await fetch(video.uri);
+      const blob = await response.blob();
+      formData.append("videos", blob, video.name);
+    }
+  
     try {
       const response = await fetch(
         "https://be-android-project.onrender.com/api/post/create",
@@ -183,9 +181,34 @@ const AddListingScreen = () => {
           body: formData,
         }
       );
-
+  
       if (response.ok) {
         Alert.alert("Thành công", "Tạo bài viết thành công!");
+        // Reset form
+        setTitle("");
+        setDescription("");
+        setPrice("");
+        setAddress("");
+        setDistrict("");
+        setWard("");
+        setCity("");
+        setRoomType("Single");
+        setArea("");
+        setAvailability(true);
+        setAmenities({
+          hasWifi: false,
+          hasParking: false,
+          hasAirConditioner: false,
+          hasKitchen: false,
+          hasElevator: false,
+        });
+        setElectricityCost("");
+        setWaterCost("");
+        setInternetCost("");
+        setCleaningCost("");
+        setSecurityCost("");
+        setImages([]);
+        setVideos([]);
       } else {
         const errorText = await response.text();
         console.error("API Error:", errorText);
@@ -196,6 +219,7 @@ const AddListingScreen = () => {
       Alert.alert("Thất bại", "Đã xảy ra lỗi khi gọi API.");
     }
   };
+  
 
   return (
     <ScrollView style={styles.container}>

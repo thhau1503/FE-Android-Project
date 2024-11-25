@@ -18,6 +18,7 @@ import Waiting from "./Waiting";
 import ListCategory from "./ListCategory";
 import NoteAddMore from "./NoteAddMore";
 import Entypo from "@expo/vector-icons/Entypo";
+import FilterScreen from "./FilterScreen";
 interface User {
   id: string;
   username: string;
@@ -37,6 +38,8 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const [typeSeeMore, setTypeSeeMore] = useState("");
   const [topPosts, setTopPosts] = useState([]);
   const sortedTopPosts = topPosts.sort((a, b) => b.views - a.views);
+  const [category, setCategory] = useState<string>(""); // Danh mục được chọn
+  const [allPosts, setAllPosts] = useState([]); // Danh sách bài viết ban đầu
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -70,7 +73,26 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
     fetchUserProfile();
   }, []);
+  const fetchPostsByCategory = async (selectedCategory: string) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(
+        `https://be-android-project.onrender.com/api/post/room-type/${selectedCategory}`
+      );
+      setPosts(response.data); // Cập nhật danh sách bài đăng
+    } catch (error) {
+      console.error("Error fetching posts by category:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  // Khi `category` thay đổi, gọi API lấy bài đăng theo danh mục
+  useEffect(() => {
+    if (category) {
+      fetchPostsByCategory(category);
+    }
+  }, [category]);
   const getApi = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -83,17 +105,8 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             },
           }
         );
-        setPosts(response.data);
-
-        const responseTopViews = await axios.get(
-          "https://be-android-project.onrender.com/api/post/top-views",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setTopPosts(response.data);
+        setAllPosts(response.data); // Lưu tất cả bài viết
+        setPosts(response.data); // Hiển thị tất cả bài viết ban đầu
       } else {
         navigation.navigate("login");
       }
@@ -121,6 +134,24 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       }
     } catch (err) {
       console.log(err);
+    }
+  };
+  const handleFilterData = async (filterData: any) => {
+    try {
+      setIsLoading(true);
+
+      const response = await axios.get(
+        "https://be-android-project.onrender.com/api/post/search",
+        {
+          params: filterData,
+        }
+      );
+
+      setPosts(response.data); // Cập nhật danh sách bài viết
+    } catch (error) {
+      console.error("Error applying filter:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -177,43 +208,46 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                 Hello, {user ? user.username : "Guest"}!
               </Text>
 
-              <View style={{ marginVertical: 12 }}>
-                <View
-                  style={{
-                    width: "100%",
-                    height: 48,
-                    borderColor: "black",
-                    borderWidth: 1,
-                    borderRadius: 30,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    paddingLeft: 22,
-                  }}
-                >
+              <View
+                style={{
+                  marginVertical: 12,
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                {/* Thanh tìm kiếm */}
+                <View style={[styles.searchBox, { flex: 1 }]}>
+                  <Ionicons name="location-outline" size={20} color="#6E6E6E" />
                   <TextInput
-                    placeholder="Search"
-                    placeholderTextColor={"black"}
-                    style={{ width: "100%" }}
+                    placeholder="Tìm theo khu vực"
+                    placeholderTextColor="#6E6E6E"
+                    style={styles.searchInput}
                     value={searchQuery}
-                    onChangeText={(value) => setSearchQuery(value)}
+                    onChangeText={(text) => setSearchQuery(text)}
                     onSubmitEditing={handleSearch}
                   />
-                  <TouchableOpacity
-                    style={{ position: "absolute", right: 1 }}
-                    onPress={handleSearch}
-                  >
-                    <Ionicons
-                      name="search-circle-outline"
-                      size={50}
-                      color="gray"
-                    />
+                  <TouchableOpacity onPress={handleSearch}>
+                    <Ionicons name="search" size={20} color="black" />
                   </TouchableOpacity>
                 </View>
+
+                {/* Nút Bộ lọc */}
+                <TouchableOpacity
+                  style={styles.filterButton}
+                  onPress={() =>
+                    navigation.navigate("FilterScreen", {
+                      onApplyFilter: handleFilterData, // Truyền hàm xử lý lọc
+                    })
+                  }
+                >
+                  <Ionicons name="options-outline" size={20} color="black" />
+                  <Text style={styles.filterText}>Bộ lọc</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
 
-          <ListCategory />
+          <ListCategory setCategory={setCategory} />
 
           <>
             <NoteAddMore title="Nhà ở tiểu biểu" typeSeeMore="product" />
@@ -305,89 +339,63 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
           <NoteAddMore title="Sản phẩm" typeSeeMore="product" />
           <View style={{ backgroundColor: "rgba(240, 240, 240,0.2)" }}>
-            {isLoading ? (
-              <Waiting />
-            ) : (
-              <>
-                <FlatList
-                  data={posts}
-                  scrollEnabled={false}
-                  renderItem={({ item }: any) => (
-                    <View
-                      style={{
-                        marginBottom: 10,
-                        width: "100%",
-                        backgroundColor: "#fff",
-                      }}
-                    >
-                      <TouchableOpacity
-                        onPress={() => {
-                          navigation.navigate("detailItem", {
-                            postId: item._id,
-                          });
-                        }}
-                      >
-                        <Image
-                          style={{ width: "100%", height: 250 }}
-                          source={{
-                            uri:
-                              item.images && item.images.length > 0
-                                ? item.images[0].url
-                                : "https://www.treehugger.com/thmb/JWrVwio-VZbHdPlrbfuLo4Y6RgQ=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/th-house-oddo-architects-6-cc292e3b8a874f9e89893cf60f39b3f1.jpeg",
-                          }}
-                        />
-                      </TouchableOpacity>
-                      {/* <View style={styles.saleItem}>
-                        <Text style={{ color: "yellow", textAlign: "center" }}>
-                          30%
-                        </Text>
-                        <Text
-                          style={{
-                            color: "white",
-                            textAlign: "center",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          sales
-                        </Text>
-                      </View> */}
-                      <View
-                        style={{
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                          padding: 10,
-                        }}
-                      >
-                        <View>
-                          <Text style={{ color: "black", paddingBottom: 15 }}>
-                            {item.title}
-                          </Text>
-                        </View>
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <Text style={{ color: "#e21f6d" }}>
-                            đ{item.price.toLocaleString("vi-VN")} triệu/tháng
-                          </Text>
-                          <View style={{ flexDirection: "row" }}>
-                            <Text>Rate: {item.averageRating}</Text>
-                            <Entypo
-                              name="star"
-                              size={17}
-                              color="rgb(157, 168, 0)"
-                            />
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  )}
-                />
-              </>
-            )}
+  {isLoading ? (
+    <Waiting />
+  ) : posts.length === 0 ? (
+    // Thêm thông báo khi không có bài viết nào
+    <Text style={{ textAlign: "center", marginVertical: 20 }}>
+      Không tìm thấy bài viết nào phù hợp.
+    </Text>
+  ) : (
+    <FlatList
+      data={posts} // Hiển thị danh sách bài viết được lọc
+      scrollEnabled={false}
+      keyExtractor={(item: any) => item._id.toString()}
+      renderItem={({ item }: any) => (
+        <View
+          style={{
+            marginBottom: 10,
+            width: "100%",
+            backgroundColor: "#fff",
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate("detailItem", {
+                postId: item._id,
+              });
+            }}
+          >
+            <Image
+              style={{ width: "100%", height: 250 }}
+              source={{
+                uri:
+                  item.images && item.images.length > 0
+                    ? item.images[0].url
+                    : "https://example.com/default-image.jpg",
+              }}
+            />
+          </TouchableOpacity>
+          <View
+            style={{
+              flexDirection: "column",
+              justifyContent: "space-between",
+              padding: 10,
+            }}
+          >
+            <Text style={{ color: "black", paddingBottom: 15 }}>
+              {item.title}
+            </Text>
+            <Text style={{ color: "#e21f6d" }}>
+              đ{item.price.toLocaleString("vi-VN")} triệu/tháng
+            </Text>
           </View>
+        </View>
+      )}
+    />
+  )}
+</View>
+
         </ScrollView>
       </View>
     </>
@@ -431,6 +439,38 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     flexDirection: "column",
+  },
+  searchBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "black",
+    borderRadius: 30,
+    paddingHorizontal: 10,
+    height: 48,
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    color: "#000",
+  },
+  filterButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderRadius: 30,
+    borderColor: "#ddd",
+    backgroundColor: "#fff",
+  },
+  filterText: {
+    marginLeft: 5,
+    fontSize: 14,
+    color: "#000",
   },
 });
 

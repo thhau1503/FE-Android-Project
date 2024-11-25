@@ -1,100 +1,117 @@
-import { Image, Text, View, StyleSheet } from "react-native";
-import React from "react";
-import { ScrollView } from "react-native";
-import NoteAddMore from "./NoteAddMore";
-const ListCategory = () => {
+import React, { useEffect, useState } from "react";
+import { Text, View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import axios from "axios";
+import { MaterialIcons } from "@expo/vector-icons";
+
+interface ListCategoryProps {
+  setCategory: (category: string) => void; // Hàm truyền từ HomeScreen
+}
+
+const ListCategory: React.FC<ListCategoryProps> = ({ setCategory }) => {
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  // Icon mapping
+  const iconMapping: { [key: string]: string } = {
+    Single: "person",
+    Double: "group",
+    Shared: "people",
+    Apartment: "apartment",
+    Dormitory: "hotel",
+    Default: "home",
+  };
+
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("https://be-android-project.onrender.com/api/post/get-room-types");
+      if (response.status === 200) {
+        setCategories(response.data);
+        setSelectedCategory(response.data[0]);
+        setCategory(response.data[0]); // Cập nhật danh mục khi tải lần đầu
+      }
+    } catch (error) {
+      console.error("Error fetching room types:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setCategory(category); // Cập nhật danh mục được chọn
+  };
+
   return (
-    <>
-      <NoteAddMore title="Danh mục" typeSeeMore="category" />
-      <View style={styles.container}>
+    <View style={styles.container}>
+      <Text style={styles.title}>Danh mục</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#e21f6d" />
+      ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.item}>
-            <Image
-              style={styles.photoItem}
-              source={{
-                uri: "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
-              }}
-            />
-            <View style={styles.cateOver}>
-              <Text style={{ textAlign: "center" }}>Căn hộ nữ</Text>
-            </View>
-          </View>
-          <View style={styles.item}>
-            <Image
-              style={styles.photoItem}
-              source={{
-                uri: "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
-              }}
-            />
-            <View style={styles.cateOver}>
-              <Text style={{ textAlign: "center" }}>Nhà trọ</Text>
-            </View>
-          </View>
-          <View style={styles.item}>
-            <Image
-              style={styles.photoItem}
-              source={{
-                uri: "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
-              }}
-            />
-            <View style={styles.cateOver}>
-              <Text style={{ textAlign: "center" }}>Căn hộ </Text>
-            </View>
-          </View>
-          <View style={styles.item}>
-            <Image
-              style={styles.photoItem}
-              source={{
-                uri: "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
-              }}
-            />
-            <View style={styles.cateOver}>
-              <Text style={{ textAlign: "center" }}>Mini house</Text>
-            </View>
-          </View>
-          <View style={styles.item}>
-            <Image
-              style={styles.photoItem}
-              source={{
-                uri: "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
-              }}
-            />
-            <View style={styles.cateOver}>
-              <Text style={{ textAlign: "center" }}>Kí túc xá</Text>
-            </View>
-          </View>
+          {categories.map((category, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.categoryButton,
+                selectedCategory === category && styles.categorySelected,
+              ]}
+              onPress={() => handleCategorySelect(category)}
+            >
+              <MaterialIcons
+                name={iconMapping[category] || iconMapping.Default}
+                size={24}
+                color={selectedCategory === category ? "#fff" : "#e21f6d"}
+              />
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === category && styles.categoryTextSelected,
+                ]}
+              >
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
-      </View>
-    </>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    marginVertical: 10,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  categoryButton: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingBottom: 10,
-  },
-  photoItem: {
-    width: 100,
-    height: 100,
-    // padding: 0,
-    // borderRadius: 10,
-    // overflow: "hidden",
-    // borderColor: "black",
-    borderTopRightRadius: 10,
-    borderTopLeftRadius: 10,
-  },
-  item: {
+    alignItems: "center",
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#e21f6d",
+    borderRadius: 20,
     marginRight: 10,
-    borderRadius: 10,
-    padding: 5,
-    // borderWidth: 1,
   },
-  cateOver: {
-    backgroundColor: "rgb(210, 210, 210)",
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
+  categorySelected: {
+    backgroundColor: "#e21f6d",
+  },
+  categoryText: {
+    marginLeft: 5,
+    color: "#e21f6d",
+  },
+  categoryTextSelected: {
+    color: "#fff",
   },
 });
+
 export default ListCategory;

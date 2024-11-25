@@ -30,61 +30,75 @@ const ManageBookingScreen = () => {
             },
           }
         );
-        console.log("Landlord ID fetched:", response.data._id);
+        console.log("User profile:", response.data);
         setLandlordId(response.data._id);
       } else {
-        throw new Error("Token không tồn tại. Vui lòng đăng nhập lại.");
+        throw new Error("Token not found");
       }
     } catch (error) {
-      console.error("Lỗi khi lấy landlordId:", error);
-      Alert.alert("Lỗi", "Không thể lấy thông tin chủ nhà.");
+      if (error.response && error.response.data.msg === "Token is not valid") {
+        await AsyncStorage.removeItem("token");
+      } else {
+        console.error("Error fetching user profile:", error);
+      }
     }
   };
 
   // Hàm gọi API để lấy danh sách yêu cầu
   const fetchBookings = async () => {
     if (!landlordId) return;
-
+  
     try {
       setLoading(true);
       const response = await axios.get(
         `https://be-android-project.onrender.com/api/request/renter/${landlordId}`
       );
-
+  
       // Lấy thông tin chi tiết bài viết và người dùng
       const detailedBookings = await Promise.all(
         response.data.map(async (item) => {
+          let postTitle = "Không xác định";
+          let userName = "Không xác định";
+  
           try {
-            const postResponse = await axios.get(
-              `https://be-android-project.onrender.com/api/post/${item.id_post}`
-            );
-            const userResponse = await axios.get(
-              `https://be-android-project.onrender.com/api/auth/user/${item.id_user_rent}`
-            );
-
-            return {
-              ...item,
-              postTitle: postResponse.data.title || "Không xác định",
-              userName: userResponse.data.username || "Không xác định",
-            };
+            if (item.id_post) {
+              const postResponse = await axios.get(
+                `https://be-android-project.onrender.com/api/post/${item.id_post}`
+              );
+              postTitle = postResponse.data.title || "Không xác định";
+            }
           } catch (error) {
-            console.error("Error fetching post or user:", error);
-            return {
-              ...item,
-              postTitle: "Không xác định",
-              userName: "Không xác định",
-            };
+            console.error("Error fetching post:", error.message);
           }
+  
+          try {
+            if (item.id_user_rent) {
+              const userResponse = await axios.get(
+                `https://be-android-project.onrender.com/api/auth/user/${item.id_user_rent}`
+              );
+              userName = userResponse.data.username || "Không xác định";
+            }
+          } catch (error) {
+            console.error("Error fetching user:", error.message);
+          }
+  
+          return {
+            ...item,
+            postTitle,
+            userName,
+          };
         })
       );
-
+  
       setBookings(detailedBookings);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách đặt lịch:", error);
+      Alert.alert("Lỗi", "Không thể lấy danh sách đặt lịch.");
     } finally {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     const initialize = async () => {

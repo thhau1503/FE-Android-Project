@@ -27,6 +27,7 @@ const ManageListingsScreen = () => {
   const [loading, setLoading] = useState(true);
   const [landlordId, setLandlordId] = useState(null);
   const navigation = useNavigation<NavigationProps>(); // Sử dụng type NavigationProps nếu cần
+  const [loadingDelete, setLoadingDelete] = useState<string | null>(null); // Lưu trạng thái xóa bài đăng
 
 
   // Hàm xóa bài đăng
