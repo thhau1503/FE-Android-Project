@@ -7,7 +7,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Switch,
 } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
@@ -31,12 +33,13 @@ const AddListingScreen = () => {
   const [landlordId, setLandlordId] = useState(null);
 
   const [amenities, setAmenities] = useState({
-    wifi: false,
-    airConditioner: false,
-    heater: false,
-    kitchen: false,
-    parking: false,
+    hasWifi: false,
+    hasParking: false,
+    hasAirConditioner: false,
+    hasKitchen: false,
+    hasElevator: false,
   });
+  
 
   const [images, setImages] = useState([]);
   const [videos, setVideos] = useState([]);
@@ -66,60 +69,49 @@ const AddListingScreen = () => {
     }
   };
 
-  const pickImages = async () => {
+  const pickMedia = async (mediaType) => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      alert("Bạn cần cấp quyền truy cập thư viện ảnh để tải lên hình ảnh!");
+      Alert.alert(
+        "Quyền truy cập bị từ chối",
+        "Bạn cần cấp quyền truy cập thư viện để chọn hình ảnh hoặc video!"
+      );
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: mediaType,
       allowsMultipleSelection: true,
       quality: 1,
     });
 
     if (!result.canceled && result.assets) {
-      const selectedImages = result.assets.map((asset) => ({
-        uri: asset.uri,
-        type: "image/jpeg",
-        name: asset.uri.split("/").pop(),
-      }));
-      setImages((prevImages) => [...prevImages, ...selectedImages]);
+      if (mediaType === ImagePicker.MediaTypeOptions.Images) {
+        const selectedImages = result.assets.map((asset) => ({
+          uri: asset.uri,
+          type: "image/jpeg",
+          name: asset.uri.split("/").pop(),
+        }));
+        setImages((prevImages) => [...prevImages, ...selectedImages]);
+      } else if (mediaType === ImagePicker.MediaTypeOptions.Videos) {
+        const selectedVideos = result.assets.map((asset) => ({
+          uri: asset.uri,
+          type: "video/mp4",
+          name: asset.uri.split("/").pop(),
+        }));
+        setVideos((prevVideos) => [...prevVideos, ...selectedVideos]);
+      }
     }
   };
 
-  const pickVideos = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      alert("Bạn cần cấp quyền truy cập thư viện để tải lên video!");
-      return;
+  const removeMedia = (mediaType, index) => {
+    if (mediaType === "image") {
+      const updatedImages = images.filter((_, i) => i !== index);
+      setImages(updatedImages);
+    } else if (mediaType === "video") {
+      const updatedVideos = videos.filter((_, i) => i !== index);
+      setVideos(updatedVideos);
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-      allowsMultipleSelection: true,
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets) {
-      const selectedVideos = result.assets.map((asset) => ({
-        uri: asset.uri,
-        type: "video/mp4",
-        name: asset.uri.split("/").pop(),
-      }));
-      setVideos((prevVideos) => [...prevVideos, ...selectedVideos]);
-    }
-  };
-
-  const removeImage = (index) => {
-    const updatedImages = images.filter((_, i) => i !== index);
-    setImages(updatedImages);
-  };
-
-  const removeVideo = (index) => {
-    const updatedVideos = videos.filter((_, i) => i !== index);
-    setVideos(updatedVideos);
   };
 
   const handleToggleAmenity = (key) => {
@@ -167,7 +159,7 @@ const AddListingScreen = () => {
     images.forEach((image) => {
       formData.append("images", {
         uri: image.uri,
-        type: image.type,
+        type: "image/jpeg",
         name: image.name,
       });
     });
@@ -175,7 +167,7 @@ const AddListingScreen = () => {
     videos.forEach((video) => {
       formData.append("videos", {
         uri: video.uri,
-        type: video.type,
+        type: "video/mp4",
         name: video.name,
       });
     });
@@ -193,7 +185,6 @@ const AddListingScreen = () => {
       );
 
       if (response.ok) {
-        const result = await response.json();
         Alert.alert("Thành công", "Tạo bài viết thành công!");
       } else {
         const errorText = await response.text();
@@ -277,22 +268,30 @@ const AddListingScreen = () => {
         onChangeText={setCity}
       />
 
+      <Text style={styles.label}>Loại phòng</Text>
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={roomType}
+          onValueChange={(value) => setRoomType(value)}
+        >
+          <Picker.Item label="Single" value="Single" />
+          <Picker.Item label="Double" value="Double" />
+          <Picker.Item label="Shared" value="Shared" />
+          <Picker.Item label="Apartment" value="Apartment" />
+          <Picker.Item label="Dormitory" value="Dormitory" />
+        </Picker>
+      </View>
+
       <Text style={styles.label}>Tiện nghi</Text>
-      <View style={styles.checkboxContainer}>
+      <View style={styles.amenitiesContainer}>
         {Object.keys(amenities).map((key) => (
-          <TouchableOpacity
-            key={key}
-            style={styles.checkboxRow}
-            onPress={() => handleToggleAmenity(key)}
-          >
-            <View
-              style={[
-                styles.checkbox,
-                amenities[key] && styles.checkboxSelected,
-              ]}
+          <View key={key} style={styles.amenityRow}>
+            <Text style={styles.amenityLabel}>{key}</Text>
+            <Switch
+              value={amenities[key]}
+              onValueChange={() => handleToggleAmenity(key)}
             />
-            <Text style={styles.checkboxLabel}>{key}</Text>
-          </TouchableOpacity>
+          </View>
         ))}
       </View>
 
@@ -334,26 +333,32 @@ const AddListingScreen = () => {
       />
 
       <Text style={styles.label}>Hình ảnh</Text>
-      <TouchableOpacity style={styles.imagePickerButton} onPress={pickImages}>
+      <TouchableOpacity
+        style={styles.imagePickerButton}
+        onPress={() => pickMedia(ImagePicker.MediaTypeOptions.Images)}
+      >
         <Text style={styles.imagePickerText}>Chọn hình ảnh</Text>
       </TouchableOpacity>
       {images.map((image, index) => (
         <View key={index} style={styles.imagePreview}>
           <Text>{image.name}</Text>
-          <TouchableOpacity onPress={() => removeImage(index)}>
+          <TouchableOpacity onPress={() => removeMedia("image", index)}>
             <Text style={styles.removeButton}>Xóa</Text>
           </TouchableOpacity>
         </View>
       ))}
 
       <Text style={styles.label}>Video</Text>
-      <TouchableOpacity style={styles.imagePickerButton} onPress={pickVideos}>
+      <TouchableOpacity
+        style={styles.imagePickerButton}
+        onPress={() => pickMedia(ImagePicker.MediaTypeOptions.Videos)}
+      >
         <Text style={styles.imagePickerText}>Chọn Video</Text>
       </TouchableOpacity>
       {videos.map((video, index) => (
         <View key={index} style={styles.imagePreview}>
           <Text>{video.name}</Text>
-          <TouchableOpacity onPress={() => removeVideo(index)}>
+          <TouchableOpacity onPress={() => removeMedia("video", index)}>
             <Text style={styles.removeButton}>Xóa</Text>
           </TouchableOpacity>
         </View>
@@ -372,11 +377,10 @@ const styles = StyleSheet.create({
   label: { fontSize: 16, marginVertical: 5 },
   input: { borderWidth: 1, borderColor: "#ddd", borderRadius: 5, padding: 10, marginBottom: 10 },
   textArea: { height: 80, textAlignVertical: "top" },
-  checkboxContainer: { marginVertical: 10 },
-  checkboxRow: { flexDirection: "row", alignItems: "center", marginVertical: 5 },
-  checkbox: { width: 20, height: 20, borderWidth: 1, borderColor: "#ddd", marginRight: 10, backgroundColor: "#fff" },
-  checkboxSelected: { backgroundColor: "#007BFF" },
-  checkboxLabel: { fontSize: 16 },
+  pickerContainer: { borderWidth: 1, borderColor: "#ddd", borderRadius: 5, marginBottom: 10 },
+  amenitiesContainer: { marginVertical: 10 },
+  amenityRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginVertical: 5 },
+  amenityLabel: { fontSize: 16 },
   imagePickerButton: { backgroundColor: "#f0f0f0", padding: 10, borderRadius: 5, alignItems: "center", marginVertical: 10 },
   imagePreview: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginVertical: 5 },
   removeButton: { color: "red", fontWeight: "bold" },

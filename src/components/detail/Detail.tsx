@@ -49,7 +49,7 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
   const [isFavorite, setIsFavorite] = useState(false); // Trạng thái yêu thích
   const [userId, setUserId] = useState<string>(""); // Lưu trữ userId
   const [viewMode, setViewMode] = useState("images"); // 'images' hoặc 'video'
-  const [isVideoSelected, setIsVideoSelected] = useState(false); 
+  const [isVideoSelected, setIsVideoSelected] = useState(false);
 
   const [comments, setComments] = useState([
     {
@@ -285,18 +285,21 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
               />
             ) : house.video ? (
               <Video
-  source={{ uri: house.video.url }}
-  style={{
-    height: 320,
-    width: 320,
-    borderRadius: 10,
-  }}
-  useNativeControls
-  resizeMode={"contain" as ResizeMode} // Cast 'contain' as ResizeMode
-  onError={(error) => console.error("Error Loading Video: ", error)}
-  onPlaybackStatusUpdate={(status) => console.log("Playback Status: ", status)}
-/>
-
+                source={{ uri: house.video.url }}
+                style={{
+                  height: 320,
+                  width: 320,
+                  borderRadius: 10,
+                }}
+                useNativeControls
+                resizeMode={"contain" as ResizeMode} // Cast 'contain' as ResizeMode
+                onError={(error) =>
+                  console.error("Error Loading Video: ", error)
+                }
+                onPlaybackStatusUpdate={(status) =>
+                  console.log("Playback Status: ", status)
+                }
+              />
             ) : (
               <View style={style.noVideoContainer}>
                 <Text style={style.noVideoText}>Không có video</Text>
@@ -435,7 +438,9 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
 
         {house && (
           <View
-            style={(style.additionalDetailsContainer, { paddingHorizontal: 20 })}
+            style={
+              (style.additionalDetailsContainer, { paddingHorizontal: 20 })
+            }
           >
             <Text style={style.additionalDetailsTitle}>Thông Tin Chi Tiết</Text>
             <Text style={style.detailText}>{house.description}</Text>
@@ -496,8 +501,6 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
       </View>
     </SafeAreaView>
   );
-
-  
 };
 
 const style = StyleSheet.create({
@@ -812,7 +815,6 @@ const style = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  
 });
 
 export default Detail;

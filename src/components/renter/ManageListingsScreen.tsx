@@ -11,11 +11,46 @@ import {
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+
+// Định nghĩa RootStackParamList
+type RootStackParamList = {
+  ManageListings: undefined;
+  EditListing: { postId: string };
+};
+
+type NavigationProps = StackNavigationProp<RootStackParamList, "ManageListings">;
 
 const ManageListingsScreen = () => {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [landlordId, setLandlordId] = useState(null);
+  const navigation = useNavigation<NavigationProps>(); // Sử dụng type NavigationProps nếu cần
+
+
+  // Hàm xóa bài đăng
+  const deleteListing = async (postId) => {
+    try {
+      // Gọi API xóa bài đăng
+      const response = await axios.delete(
+        `https://be-android-project.onrender.com/api/post/${postId}`
+      );
+
+      if (response.status === 200) {
+        // Cập nhật danh sách sau khi xóa thành công
+        setListings((prevListings) =>
+          prevListings.filter((item) => item._id !== postId)
+        );
+        alert("Xóa bài đăng thành công!");
+      } else {
+        console.error("Xóa bài đăng thất bại:", response.status);
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa bài đăng:", error);
+      alert("Đã xảy ra lỗi khi xóa bài đăng.");
+    }
+  };
 
   // Fetch landlordId and user info
   const fetchUserProfile = async () => {
@@ -83,14 +118,17 @@ const ManageListingsScreen = () => {
   const renderListing = (item) => (
     <View key={item.id || Math.random()} style={styles.card}>
       <Image
-        source={{ uri: item.images?.[0]?.url || "https://via.placeholder.com/150" }}
+        source={{
+          uri: item.images?.[0]?.url || "https://via.placeholder.com/150",
+        }}
         style={styles.image}
       />
 
       <View style={styles.header}>
         <Text style={styles.title}>{item.title || "Không có tiêu đề"}</Text>
         <Text style={styles.price}>
-          {item.price ? item.price.toLocaleString("vi-VN") : "Chưa xác định"} VND
+          {item.price ? item.price.toLocaleString("vi-VN") : "Chưa xác định"}{" "}
+          VND
         </Text>
       </View>
 
@@ -98,13 +136,15 @@ const ManageListingsScreen = () => {
         <View style={styles.infoRow}>
           <MaterialIcons name="location-on" size={16} color="#555" />
           <Text style={styles.infoText}>
-            {item.location?.address || "Địa chỉ không xác định"}, {item.location?.district},{" "}
-            {item.location?.city}
+            {item.location?.address || "Địa chỉ không xác định"},{" "}
+            {item.location?.district}, {item.location?.city}
           </Text>
         </View>
         <View style={styles.infoRow}>
           <FontAwesome name="home" size={16} color="#555" />
-          <Text style={styles.infoText}>Loại phòng: {item.roomType || "Không xác định"}</Text>
+          <Text style={styles.infoText}>
+            Loại phòng: {item.roomType || "Không xác định"}
+          </Text>
         </View>
         <View style={styles.infoRow}>
           <FontAwesome name="area-chart" size={16} color="#555" />
@@ -169,10 +209,20 @@ const ManageListingsScreen = () => {
       </View>
 
       <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.editButton}>
+        {/* Nút Edit */}
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={
+            () => navigation.navigate("EditListing", { postId: item._id }) // Truyền postId vào EditListing
+          }
+        >
           <FontAwesome name="edit" size={16} color="#fff" />
+          <Text style={{ color: "#fff", marginLeft: 5 }}></Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteButton}>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => deleteListing(item._id)}
+        >
           <FontAwesome name="trash" size={16} color="#fff" />
         </TouchableOpacity>
       </View>
