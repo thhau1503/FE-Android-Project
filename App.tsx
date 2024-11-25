@@ -20,7 +20,7 @@ import Detail from "./src/components/detail/Detail";
 import Notification from "./src/components/notify/Notificaion";
 import ForgotPasswordScreen from "./src/components/login/ForgotPasswordScreen";
 import VerifyOTPScreen from "./src/components/login/VerifyOTPScreen";
-import BookingScreen from "./src/components/renter/BookingScreen";
+import BookingScreen from "./src/components/book/BookingScreen";
 import EditListingScreen from "./src/components/renter/EditListingScreen";
 import FilterScreen from "./src/components/home/FilterScreen";
 const Stack = createStackNavigator();
