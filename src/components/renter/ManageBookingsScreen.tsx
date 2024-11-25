@@ -6,18 +6,47 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ManageBookingScreen = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const landlordId = "66f3e51e32c1888b7b514852"; // ID của chủ nhà
+  const [landlordId, setLandlordId] = useState(null); // Lấy ID của chủ nhà từ API
+
+  // Hàm lấy landlordId từ API
+  const fetchLandlordId = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        const response = await axios.get(
+          "https://be-android-project.onrender.com/api/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log("Landlord ID fetched:", response.data._id);
+        setLandlordId(response.data._id);
+      } else {
+        throw new Error("Token không tồn tại. Vui lòng đăng nhập lại.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy landlordId:", error);
+      Alert.alert("Lỗi", "Không thể lấy thông tin chủ nhà.");
+    }
+  };
 
   // Hàm gọi API để lấy danh sách yêu cầu
   const fetchBookings = async () => {
+    if (!landlordId) return;
+
     try {
+      setLoading(true);
       const response = await axios.get(
         `https://be-android-project.onrender.com/api/request/renter/${landlordId}`
       );
@@ -25,18 +54,27 @@ const ManageBookingScreen = () => {
       // Lấy thông tin chi tiết bài viết và người dùng
       const detailedBookings = await Promise.all(
         response.data.map(async (item) => {
-          const postResponse = await axios.get(
-            `https://be-android-project.onrender.com/api/post/${item.id_post}`
-          );
-          const userResponse = await axios.get(
-            `https://be-android-project.onrender.com/api/auth/user/${item.id_user_rent}`
-          );
+          try {
+            const postResponse = await axios.get(
+              `https://be-android-project.onrender.com/api/post/${item.id_post}`
+            );
+            const userResponse = await axios.get(
+              `https://be-android-project.onrender.com/api/auth/user/${item.id_user_rent}`
+            );
 
-          return {
-            ...item,
-            postTitle: postResponse.data.title || "Không xác định",
-            userName: userResponse.data.username || "Không xác định",
-          };
+            return {
+              ...item,
+              postTitle: postResponse.data.title || "Không xác định",
+              userName: userResponse.data.username || "Không xác định",
+            };
+          } catch (error) {
+            console.error("Error fetching post or user:", error);
+            return {
+              ...item,
+              postTitle: "Không xác định",
+              userName: "Không xác định",
+            };
+          }
         })
       );
 
@@ -49,31 +87,46 @@ const ManageBookingScreen = () => {
   };
 
   useEffect(() => {
-    fetchBookings();
+    const initialize = async () => {
+      console.log("Fetching landlordId...");
+      await fetchLandlordId();
+    };
+    initialize();
   }, []);
+
+  useEffect(() => {
+    if (landlordId) {
+      console.log("Fetching bookings for landlordId:", landlordId);
+      fetchBookings(); // Gọi API lấy danh sách khi có landlordId
+    }
+  }, [landlordId]);
 
   // Hàm cập nhật trạng thái (Accept/Decline)
   const updateStatus = async (id, status) => {
     try {
+      console.log(`Updating status to ${status} for request ID: ${id}`);
       await axios.put(
         `https://be-android-project.onrender.com/api/request/${id}`,
         { status }
       );
       fetchBookings(); // Làm mới danh sách sau khi cập nhật
     } catch (error) {
-      console.error(`Lỗi khi cập nhật trạng thái: ${error.response.status}`);
+      console.error(`Lỗi khi cập nhật trạng thái:`, error);
+      Alert.alert("Lỗi", "Không thể cập nhật trạng thái.");
     }
   };
 
   // Hàm xóa yêu cầu
   const deleteRequest = async (id) => {
     try {
+      console.log(`Deleting request ID: ${id}`);
       await axios.delete(
         `https://be-android-project.onrender.com/api/request/${id}`
       );
       fetchBookings(); // Làm mới danh sách sau khi xóa
     } catch (error) {
-      console.error(`Lỗi khi xóa yêu cầu: ${error.response.status}`);
+      console.error(`Lỗi khi xóa yêu cầu:`, error);
+      Alert.alert("Lỗi", "Không thể xóa yêu cầu.");
     }
   };
 
@@ -84,79 +137,74 @@ const ManageBookingScreen = () => {
   };
 
   // Hàm render từng mục
-  const renderBooking = (item) => {
-    return (
-      <View style={styles.card} key={item._id}>
-        {/* Header với tiêu đề bài viết */}
-        <View style={styles.header}>
-          <Icon name="home" size={18} color="#fff" style={styles.icon} />
-          <Text style={styles.headerText}>{item.postTitle}</Text>
-        </View>
+  const renderBooking = (item) => (
+    <View style={styles.card} key={item._id}>
+      <View style={styles.header}>
+        <Icon name="home" size={18} color="#fff" style={styles.icon} />
+        <Text style={styles.headerText}>{item.postTitle}</Text>
+      </View>
 
-        {/* Nội dung chi tiết */}
-        <View style={styles.content}>
-          <View style={styles.infoRow}>
-            <Icon name="user" size={16} color="#555" style={styles.icon} />
-            <Text>Người đặt: {item.userName}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Icon name="calendar" size={16} color="#555" style={styles.icon} />
-            <Text>Ngày đặt: {formatDate(item.date_time)}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Icon name="clock-o" size={16} color="#555" style={styles.icon} />
-            <Text>
-              Giờ đặt:{" "}
-              {new Date(item.date_time).toLocaleTimeString("vi-VN", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Text>
-          </View>
-          <Text
-            style={{
-              color:
-                item.status === "Pending"
-                  ? "orange"
-                  : item.status === "Accepted"
-                  ? "green"
-                  : "red",
-            }}
-          >
-            Trạng thái: {item.status}
+      <View style={styles.content}>
+        <View style={styles.infoRow}>
+          <Icon name="user" size={16} color="#555" style={styles.icon} />
+          <Text>Người đặt: {item.userName}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Icon name="calendar" size={16} color="#555" style={styles.icon} />
+          <Text>Ngày đặt: {formatDate(item.date_time)}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Icon name="clock-o" size={16} color="#555" style={styles.icon} />
+          <Text>
+            Giờ đặt:{" "}
+            {new Date(item.date_time).toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </Text>
         </View>
-
-        {/* Nút hành động */}
-        <View style={styles.actions}>
-          {item.status === "Pending" && (
-            <>
-              <TouchableOpacity
-                style={[styles.button, styles.acceptButton]}
-                onPress={() => updateStatus(item._id, "Accepted")}
-              >
-                <Text style={styles.buttonText}>Chấp nhận</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.rejectButton]}
-                onPress={() => updateStatus(item._id, "Declined")}
-              >
-                <Text style={styles.buttonText}>Từ chối</Text>
-              </TouchableOpacity>
-            </>
-          )}
-          {item.status !== "Pending" && (
-            <TouchableOpacity
-              style={[styles.button, styles.deleteButton]}
-              onPress={() => deleteRequest(item._id)}
-            >
-              <Text style={styles.buttonText}>Xóa</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        <Text
+          style={{
+            color:
+              item.status === "Pending"
+                ? "orange"
+                : item.status === "Accepted"
+                ? "green"
+                : "red",
+          }}
+        >
+          Trạng thái: {item.status}
+        </Text>
       </View>
-    );
-  };
+
+      <View style={styles.actions}>
+        {item.status === "Pending" && (
+          <>
+            <TouchableOpacity
+              style={[styles.button, styles.acceptButton]}
+              onPress={() => updateStatus(item._id, "Accepted")}
+            >
+              <Text style={styles.buttonText}>Chấp nhận</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.rejectButton]}
+              onPress={() => updateStatus(item._id, "Declined")}
+            >
+              <Text style={styles.buttonText}>Từ chối</Text>
+            </TouchableOpacity>
+          </>
+        )}
+        {item.status !== "Pending" && (
+          <TouchableOpacity
+            style={[styles.button, styles.deleteButton]}
+            onPress={() => deleteRequest(item._id)}
+          >
+            <Text style={styles.buttonText}>Xóa</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.container}>

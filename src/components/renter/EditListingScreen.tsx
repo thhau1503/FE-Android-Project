@@ -15,7 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
 
 const EditListingScreen = ({ route, navigation }) => {
-  const { postId } = route.params; // Lấy ID bài đăng từ tham số truyền vào
+  const { postId } = route.params;
   const [loading, setLoading] = useState(true);
 
   const [title, setTitle] = useState("");
@@ -42,10 +42,10 @@ const EditListingScreen = ({ route, navigation }) => {
     cleaning: "",
     security: "",
   });
-  const [images, setImages] = useState([]); // Ảnh từ API
-  const [newImages, setNewImages] = useState([]); // Ảnh được thêm mới
-  const [videos, setVideos] = useState([]); // Video từ API
-  const [newVideos, setNewVideos] = useState([]); // Video được thêm mới
+  const [images, setImages] = useState([]);
+  const [newImages, setNewImages] = useState([]);
+  const [videos, setVideos] = useState([]);
+  const [newVideos, setNewVideos] = useState([]);
 
   useEffect(() => {
     fetchListingDetails();
@@ -134,25 +134,24 @@ const EditListingScreen = ({ route, navigation }) => {
     formData.append("amenities", JSON.stringify(amenities));
     formData.append("additionalCosts", JSON.stringify(additionalCosts));
 
-    // Thêm ảnh mới
-    newImages.forEach((image, index) => {
-      formData.append(`images[${index}]`, {
+    newImages.forEach((image) => {
+      formData.append("images", {
         uri: image.uri,
         type: "image/jpeg",
-        name: `image_${index}.jpg`,
+        name: image.name,
       });
     });
 
-    // Thêm video mới
-    newVideos.forEach((video, index) => {
-      formData.append(`videos[${index}]`, {
+    newVideos.forEach((video) => {
+      formData.append("videos", {
         uri: video.uri,
         type: "video/mp4",
-        name: `video_${index}.mp4`,
+        name: video.name,
       });
     });
 
     try {
+      console.log("FormData:", Array.from(formData.entries())); // Kiểm tra dữ liệu FormData
       const response = await axios.put(
         `https://be-android-project.onrender.com/api/post/${postId}`,
         formData,
@@ -162,8 +161,13 @@ const EditListingScreen = ({ route, navigation }) => {
           },
         }
       );
-      Alert.alert("Thành công", "Cập nhật bài viết thành công!");
-      navigation.goBack();
+
+      if (response.status === 200) {
+        Alert.alert("Thành công", "Cập nhật bài viết thành công!");
+        navigation.goBack();
+      } else {
+        Alert.alert("Thất bại", `Lỗi: ${response.data.message}`);
+      }
     } catch (error) {
       console.error("Update error:", error);
       Alert.alert("Thất bại", "Không thể cập nhật bài viết.");
@@ -230,7 +234,7 @@ const EditListingScreen = ({ route, navigation }) => {
           <Text style={styles.additionalCostLabel}>{key}</Text>
           <TextInput
             style={styles.input}
-            value={additionalCosts[key].toString()}
+            value={additionalCosts[key]?.toString() || ""}
             onChangeText={(value) =>
               setAdditionalCosts({ ...additionalCosts, [key]: value })
             }
