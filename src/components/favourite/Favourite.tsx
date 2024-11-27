@@ -32,13 +32,15 @@ const FavouriteScreen = ({ navigation }) => {
             },
           }
         );
+        
 
         const favouritePosts = response.data;
+        console.log("Danh sách yêu thích:", response.data);
 
         const detailedPostsPromises = favouritePosts.map(async (favourite) => {
           try {
             const postResponse = await axios.get(
-              `https://be-android-project.onrender.com/api/post/${favourite.id_post}`
+              `https://be-android-project.onrender.com/api/post/${favourite.id_post._id}`
             );
             return { ...postResponse.data, favouriteId: favourite._id };
           } catch (error) {
@@ -57,7 +59,7 @@ const FavouriteScreen = ({ navigation }) => {
         navigation.navigate("login");
       }
     } catch (error) {
-      console.error("Lỗi khi lấy danh sách yêu thích:", error);
+      //console.error("Lỗi khi lấy danh sách yêu thích:", error.response.data);
     } finally {
       setLoading(false);
     }
@@ -81,7 +83,7 @@ const FavouriteScreen = ({ navigation }) => {
       >
         <Image
           source={{
-            uri: item.images?.[0] || "https://via.placeholder.com/150",
+            uri: item.images?.[0]?.url ||"https://via.placeholder.com/150",
           }}
           style={styles.image}
         />

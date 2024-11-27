@@ -8,6 +8,7 @@ import ProfileScreen from "../components/profile/ProfileScreen";
 import FavouriteScreen from "../components/favourite/Favourite";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import ChatForm from "../components/chat/Chat";
+import BookUserScreen from "../components/book/BookUserScreen";
 const Tab = createBottomTabNavigator();
 
 const optionScreen = ({ route }: any) => ({
@@ -34,17 +35,17 @@ const optionScreen = ({ route }: any) => ({
       iconName = focused ? "person-circle" : "person-circle-outline";
     } else if (route.name === "Trang chủ") {
       iconName = focused ? "home" : "home-outline";
-    } else if (route.name === "Chat") {
-      iconName = focused ? "chatbubbles-sharp" : "chatbubbles-outline";
+    } else if (route.name === "Book") {
+      iconName = focused ? "time-outline" : "time-outline";
     }
 
     // You can return any component that you like here!
     return <Ionicons name={iconName} size={size} color={color} />;
   },
   tabBarActiveTintColor: "black",
-  tabBarInactiveTintColor: "tomato",
+  tabBarInactiveTintColor: "black",
   headerShown: false,
-  tabBarStyle: { backgroundColor: "#1bcdff" },
+  tabBarStyle: { backgroundColor: "#f5f2f0" },
   tabBarLabelStyle: { color: "black", fontweight: "bold" },
 });
 
@@ -54,7 +55,7 @@ const TabNavigator = () => {
       <Tab.Navigator screenOptions={optionScreen}>
         <Tab.Screen name="Trang chủ" component={HomeScreen}></Tab.Screen>
         <Tab.Screen name="Yêu thích" component={FavouriteScreen}></Tab.Screen>
-        <Tab.Screen name="Chat" component={ChatForm}></Tab.Screen>
+        <Tab.Screen name="Book" component={BookUserScreen}></Tab.Screen>
         <Tab.Screen name="profile" component={ProfileScreen}></Tab.Screen>
       </Tab.Navigator>
     </>

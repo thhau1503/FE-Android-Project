@@ -3,62 +3,81 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import {
+  ActivityIndicator,
+  View,
+  Alert,
+} from "react-native";
+
+// Import Screens
 import LoginScreen from "./src/components/login/LoginScreen";
 import ProfileScreen from "./src/components/profile/ProfileScreen";
 import RegisterScreen from "./src/components/register/RegisterScreen";
-import OtpVerificationScreen from "./src/components/register/OtpVerificationScreen"; // Màn hình OTP
-import TabNavigator from "./src/screens/TabNavigator";
+import OtpVerificationScreen from "./src/components/register/OtpVerificationScreen";
+import TabNavigator from "./src/screens/TabNavigator"; // Tab dành cho User
+import RenterTabNavigator from "./src/screens/RenterTabNavigator"; // Tab dành cho Renter
 import Detail from "./src/components/detail/Detail";
-import { ActivityIndicator, View, Alert } from "react-native";
 import Notification from "./src/components/notify/Notificaion";
 import ForgotPasswordScreen from "./src/components/login/ForgotPasswordScreen";
 import VerifyOTPScreen from "./src/components/login/VerifyOTPScreen";
-
+import BookingScreen from "./src/components/book/BookingScreen";
+import EditListingScreen from "./src/components/renter/EditListingScreen";
+import FilterScreen from "./src/components/home/FilterScreen";
+import MapScreen from "./src/components/detail/Map";
 const Stack = createStackNavigator();
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [token, setToken] = useState<string | null>(null);
+  const [initialRoute, setInitialRoute] = useState<string>("login"); // Mặc định là màn hình đăng nhập
 
   useEffect(() => {
-    const checkToken = async () => {
+    const checkTokenAndRole = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem("token");
-        console.log("token:", storedToken);
-        if (storedToken) {
+        const token = await AsyncStorage.getItem("token");
+        console.log("Stored Token:", token);
+
+        if (token) {
+          // Xác thực token và lấy thông tin người dùng
           const response = await axios.get(
             "https://be-android-project.onrender.com/api/auth/me",
             {
-              headers: {
-                Authorization: `Bearer ${storedToken}`,
-              },
+              headers: { Authorization: `Bearer ${token}` },
             }
           );
-          // Nếu token hợp lệ, lưu token vào state
-          setToken(storedToken);
+
+          const userRole = response.data.user_role;
+          console.log("User Role:", userRole);
+
+          // Điều hướng dựa trên vai trò
+          if (userRole === "Renter") {
+            setInitialRoute("renterTab");
+          } else {
+            setInitialRoute("userTab");
+          }
         } else {
-          // Nếu không có token, điều hướng về màn hình đăng nhập
-          setToken(null);
+          setInitialRoute("login"); // Không có token, chuyển về đăng nhập
         }
       } catch (error) {
-        // Nếu token không hợp lệ hoặc có lỗi, chuyển về đăng nhập
+        console.error("Error checking token and role:", error);
+
+        // Nếu token không hợp lệ hoặc lỗi, chuyển về đăng nhập
         if (error.response && error.response.status === 401) {
           Alert.alert(
             "Session Expired",
-            "Token is not valid. Please log in again."
+            "Your session has expired. Please log in again."
           );
-          setToken(null); // Token không hợp lệ, chuyển hướng về đăng nhập
-        } else {
-          console.error("Error fetching token or making request:", error);
         }
+
+        setInitialRoute("login");
       } finally {
-        setIsLoading(false); // Hoàn thành việc kiểm tra token
+        setIsLoading(false); // Hoàn thành việc kiểm tra
       }
     };
 
-    checkToken();
+    checkTokenAndRole();
   }, []);
 
+  // Hiển thị trạng thái đang tải
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -70,19 +89,33 @@ const App: React.FC = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={token ? "tab" : "login"} // Điều hướng dựa vào trạng thái của token
+        initialRouteName={initialRoute} // Điều hướng ban đầu dựa trên vai trò
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="tab" component={TabNavigator} />
+        {/* Tab dành cho User */}
+        <Stack.Screen name="userTab" component={TabNavigator} />
+
+        {/* Tab dành cho Renter */}
+        <Stack.Screen name="renterTab" component={RenterTabNavigator} />
+        <Stack.Screen name="EditListing" component={EditListingScreen} />
+
+        {/* Auth Screens */}
         <Stack.Screen name="login" component={LoginScreen} />
         <Stack.Screen name="register" component={RegisterScreen} />
+
+        <Stack.Screen name="MapScreen" component={MapScreen} />
+
         <Stack.Screen
           name="otpVerification"
           component={OtpVerificationScreen}
         />
+          <Stack.Screen name="FilterScreen" component={FilterScreen} />
         <Stack.Screen name="VerifyOTP" component={VerifyOTPScreen} />
-        <Stack.Screen name="profile" component={ProfileScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+        <Stack.Screen name="booking" component={BookingScreen} />
+
+        {/* Other Screens */}
+        <Stack.Screen name="profile" component={ProfileScreen} />
         <Stack.Screen name="detailItem" component={Detail} />
         <Stack.Screen name="notification" component={Notification} />
       </Stack.Navigator>
