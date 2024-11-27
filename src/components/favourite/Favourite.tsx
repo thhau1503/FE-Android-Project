@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -66,7 +66,7 @@ const FavouriteScreen = ({ navigation }) => {
   };
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       fetchFavourites();
     }, [])
   );
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   },
   price: {
     fontSize: 16,
-    color: "#E63946",
+    color: "#0c0203",
     marginTop: 5,
   },
   loadingContainer: {

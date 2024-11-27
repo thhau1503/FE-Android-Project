@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Button,
   FlatList,
@@ -22,6 +22,7 @@ import ListCategory from "./ListCategory";
 import NoteAddMore from "./NoteAddMore";
 import Entypo from "@expo/vector-icons/Entypo";
 import FilterScreen from "./FilterScreen";
+import { useFocusEffect } from "@react-navigation/native";
 interface User {
   id: string;
   username: string;
@@ -102,7 +103,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       const token = await AsyncStorage.getItem("token");
       if (token) {
         const response = await axios.get(
-          "https://be-android-project.onrender.com/api/post/getAll",
+          "https://be-android-project.onrender.com/api/post/getLatest",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -120,6 +121,12 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
       setIsLoading(false);
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      getApi();
+    }, [])
+  );
   const getTopPosts = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -234,6 +241,19 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     };
   };
 
+  const incrementViewCount = async (postId: string) => {
+    try {
+      await axios.put(`http://192.168.100.123:5000/api/post/${postId}/views`);
+    } catch (error) {
+      console.error('Error incrementing view count:', error.response.data);
+    }
+  };
+
+  const handlePostPress = async (postId: string) => {
+    await incrementViewCount(postId);
+    navigation.navigate('detailItem', { postId });
+  };
+
   return (
     <>
       <StatusBar backgroundColor="#2d2da4" barStyle="light-content" />
@@ -268,7 +288,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                 <View style={[styles.searchBox, { flex: 1 }]}>
                   <Ionicons name="location-outline" size={20} color="#6E6E6E" />
                   <TextInput
-                    placeholder="Tìm theo khu vực"
+                    placeholder="Tìm theo phòng trọ phù hợp"
                     placeholderTextColor="#6E6E6E"
                     style={styles.searchInput}
                     value={searchQuery}
@@ -297,6 +317,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           </View>
 
           <ListCategory setCategory={setCategory} />
+          <Text style={{textAlign:'center'}}>Hoặc</Text>
           <TouchableOpacity
             style={styles.nearbyButton}
             onPress={findNearbyRooms}
@@ -305,95 +326,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
             <Text style={styles.nearbyButtonText}>Tìm trọ gần đây</Text>
           </TouchableOpacity>
 
-          <>
-            <NoteAddMore title="Nhà ở tiểu biểu" typeSeeMore="product" />
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                paddingBottom: 10,
-              }}
-            >
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {sortedTopPosts.map((itemTops, index) => (
-                  <View
-                    key={itemTops._id}
-                    style={{ marginRight: 10, borderRadius: 10, padding: 5 }}
-                  >
-                    <TouchableOpacity
-                      onPress={() => {
-                        navigation.navigate("detailItem", {
-                          postId: itemTops._id,
-                        });
-                      }}
-                    >
-                      <Image
-                        style={{
-                          width: 300,
-                          height: 300,
-                          borderTopRightRadius: 10,
-                          borderTopLeftRadius: 10,
-                        }}
-                        source={{
-                          uri:
-                            itemTops.images && itemTops.images.length > 0
-                              ? itemTops.images[0].url
-                              : "https://media.vneconomy.vn/w800/images/upload/2024/09/12/can-ho-chung-cu-la-gi-ngoquocdung-com.jpg",
-                        }}
-                      />
-                    </TouchableOpacity>
-                    <View
-                      style={{
-                        backgroundColor: "rgb(255, 255, 255)",
-                        borderBottomLeftRadius: 10,
-                        borderBottomRightRadius: 10,
-                      }}
-                    >
-                      <Text style={{ textAlign: "center", fontWeight: "bold" }}>
-                        {itemTops.title}
-                      </Text>
-
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          padding: 10,
-                        }}
-                      >
-                        <Text style={{ color: "#e21f6d" }}>
-                          đ{itemTops.price.toLocaleString("vi-VN")} triệu/tháng
-                        </Text>
-                        <View style={{ flexDirection: "row" }}>
-                          <Text>Rate: {itemTops.averageRating}</Text>
-                          <Entypo
-                            name="star"
-                            size={17}
-                            color="rgb(157, 168, 0)"
-                          />
-                        </View>
-                      </View>
-                    </View>
-                    <View style={styles.saleItem}>
-                      <Text style={{ color: "yellow", textAlign: "center" }}>
-                        {itemTops.views}
-                      </Text>
-                      <Text
-                        style={{
-                          color: "white",
-                          textAlign: "center",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        views
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          </>
-
-          <NoteAddMore title="Sản phẩm" typeSeeMore="product" />
+          <NoteAddMore title="Danh sách nhà trọ" typeSeeMore="product" />
           <View style={{ backgroundColor: "rgba(240, 240, 240,0.2)" }}>
             {isLoading ? (
               <Waiting />
@@ -416,11 +349,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
                     }}
                   >
                     <TouchableOpacity
-                      onPress={() => {
-                        navigation.navigate("detailItem", {
-                          postId: item._id,
-                        });
-                      }}
+                      onPress={() => handlePostPress(item._id)}
                     >
                       <Image
                         style={{ width: "100%", height: 250 }}
@@ -528,13 +457,15 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   nearbyButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "white",
-    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: 'rgb(232, 225, 225)',
     borderRadius: 8,
-    marginHorizontal: 16,
-    marginVertical: 8,
+    marginVertical: 5,
+    alignSelf: 'center',
+    minWidth: 150,
   },
   nearbyButtonText: {
     color: "black",

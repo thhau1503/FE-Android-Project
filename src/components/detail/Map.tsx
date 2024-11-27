@@ -4,9 +4,9 @@ import { StyleSheet, View, Button, Alert } from 'react-native';
 import * as Location from 'expo-location';
 import openMap from 'react-native-open-maps';
 
-const MapScreen = () => {
+const MapScreen = ({ route }) => {
   const [currentLocation, setCurrentLocation] = useState(null); // Lưu tọa độ hiện tại
-  const destination = { latitude: 10.845258, longitude: 106.7945789 }; // Tọa độ đích
+  const { destination } = route.params;
 
   useEffect(() => {
     (async () => {
