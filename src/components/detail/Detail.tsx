@@ -23,6 +23,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import axios from "axios";
 import { Video, ResizeMode } from "expo-av";
 import MapView, { Marker } from "react-native-maps";
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get("screen");
 
@@ -60,18 +61,86 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
   const [reportReason, setReportReason] = useState("");
   const [description, setDescription] = useState("");
   const [user, setUser] = useState(null);
-  const [lat, setLat] = useState(10.8452589);
-  const [long, setLong] = useState(106.7941692);
-  const [mapModalVisible, setMapModalVisible] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [rating, setRating] = useState<number>(0);
 
-  const [comments, setComments] = useState([
-    {
-      id: "1",
-      user: "Người dùng A",
-      text: "Trọ sạch sẽ, giá hợp lý học sinh, sinh viên.",
-    },
-    { id: "2", user: "Người dùng B", text: "Giá tốt, gần trường học." },
-  ]);
+  const fetchComments = async () => {
+    console.log("Post ID:", postId);
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `https://be-android-project.onrender.com/api/comment/post/${postId}`
+      );
+      setComments(response.data);
+      console.log("Comments:", response.data);
+    } catch (error) {
+      console.log("Error fetching comments:", error.reponse.data.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCommentSubmit = async () => {
+    if (rating === 0) {
+      Alert.alert("Thông báo", "Vui lòng chọn số sao đánh giá.");
+      return;
+    }
+    if (comment.trim() === '') {
+      Alert.alert("Thông báo", "Vui lòng nhập bình luận.");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        'https://be-android-project.onrender.com/api/comment/create',
+        {
+          user: userId, 
+          house: postId,
+          rating,
+          comment,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      Alert.alert("Thành công", "Bình luận đã được gửi.");
+      setComment('');
+      setRating(0);
+      fetchComments();
+      fetchPostDetails();
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+      Alert.alert("Lỗi", "Không thể gửi bình luận.");
+    }
+  };
+
+  const renderComment = ({ item }: { item: any }) => (
+    <View style={{ padding: 10, borderBottomWidth: 1, borderColor: "#ccc" }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text style={{ fontWeight: "bold", flex: 1 }}>{item.user.username}</Text>
+        
+        <View style={{ flexDirection: 'row', marginLeft: 10 }}>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Ionicons
+              key={index}
+              name={index < item.rating ? "star" : "star-outline"}
+              size={16}
+              color="gold"
+            />
+          ))}
+        </View>
+      </View>
+  
+      <Text style={{ marginTop: 5 }}>{item.comment}</Text>
+  
+      <Text style={{ color: "gray", fontSize: 12, marginTop: 5 }}>
+        {new Date(item.createdAt).toLocaleString("vi-VN")}
+      </Text>
+    </View>
+  );
 
   const handleReportSubmit = async () => {
     try {
@@ -97,18 +166,6 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
     }
   };
 
-  const handleCommentSubmit = () => {
-    if (comment.trim()) {
-      const newComment = {
-        id: String(comments.length + 1),
-        user: "Bạn",
-        text: comment,
-      };
-      setComments([...comments, newComment]);
-      setComment(""); // Xóa nội dung comment sau khi gửi
-    }
-  };
-
   // Hàm lấy thông tin người dùng hiện tại và kiểm tra bài viết đã yêu thích hay chưa
   const fetchUserInfo = async () => {
     try {
@@ -123,12 +180,9 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
             },
           }
         );
-        console.log("Dữ liệu API trả về:", userResponse.data);
 
         setUserId(userResponse.data._id);
         setUser(userResponse.data);
-
-        console.log("Giá trị user sau khi set:", user.username);
 
         // Gọi API để kiểm tra bài viết đã được thêm vào mục yêu thích chưa
         const response = await axios.get(
@@ -165,6 +219,17 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
       return null;
     }
   };
+
+  useEffect(() => {
+    if (house) {
+      //console.log("Nhà đã được cập nhật:", house);
+    }
+  }, [house]);
+
+  useEffect(() => {
+    fetchPostDetails();
+    fetchComments();
+  }, []);
 
   // Hàm thêm vào mục yêu thích
   const addToFavorite = async () => {
@@ -245,33 +310,29 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
     }
   };
 
-  useEffect(() => {
-    const fetchPostDetails = async () => {
-      try {
-        const response = await axios.get(
-          `https://be-android-project.onrender.com/api/post/${postId}`
+  const fetchPostDetails = async () => {
+    try {
+      const response = await axios.get(
+        `http://192.168.100.123:5000/api/post/${postId}`
+      );
+      setHouse(response.data);
+      await fetchUserInfo();
+      const landlordId = response.data.landlord._id;
+      if (landlordId) {
+        const landlordResponse = await axios.get(
+          `https://be-android-project.onrender.com/api/auth/user/${landlordId}`
         );
-        setHouse(response.data);
-        await fetchUserInfo();
-
-        //setLat(response.data.location?.geoLocation?.coordinates[1]);
-        //setLong(response.data.location?.geoLocation?.coordinates[0]);
-
-        const landlordId = response.data.landlord._id;
-        if (landlordId) {
-          const landlordResponse = await axios.get(
-            `https://be-android-project.onrender.com/api/auth/user/${landlordId}`
-          );
-          setLandlord(landlordResponse.data);
-        }
-
-        setLoading(false);
-      } catch (error) {
-        setError("Lỗi khi lấy dữ liệu bài viết hoặc người cho thuê.");
-        setLoading(false);
+        setLandlord(landlordResponse.data);
       }
-    };
 
+      setLoading(false);
+    } catch (error) {
+      setError("Lỗi khi lấy dữ liệu bài viết hoặc người cho thuê.");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchPostDetails();
   }, [postId]);
 
@@ -292,8 +353,21 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
   }
 
   const openMap = () => {
-    navigation.navigate('MapScreen');
-  }
+    if (
+      house &&
+      house.location &&
+      house.location.geoLocation &&
+      Array.isArray(house.location.geoLocation.coordinates) &&
+      house.location.geoLocation.coordinates.length === 2
+    ) {
+      const [longitude, latitude] = house.location.geoLocation.coordinates;
+      const destination = { latitude, longitude };
+      console.log("Destination:", destination);
+      navigation.navigate("MapScreen", { destination });
+    } else {
+      console.error("Invalid location data");
+    }
+  };
 
   const openZalo = async (phoneNumber) => {
     try {
@@ -324,8 +398,6 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
       Alert.alert("Lỗi", "Không thể mở Zalo");
     }
   };
-
-
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
@@ -429,12 +501,35 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
         {house && (
           <View style={style.detailsContainer}>
             <View style={style.titleContainer}>
-              <View style={style.starContainer}>
-                {[...Array(5)].map((_, index) => (
-                  <Icon key={index} name="star" size={18} color="gold" />
-                ))}
-              </View>
               <Text style={style.houseTitle}>{house.title}</Text>
+              <View style={style.starContainer}>
+                {Array.from({ length: 5 }).map((_, index) => {
+                  const rating = house.averageRating;
+                  if (index < Math.floor(rating)) {
+                    return (
+                      <Icon key={index} name="star" size={18} color="gold" />
+                    );
+                  } else if (index < rating) {
+                    return (
+                      <Icon
+                        key={index}
+                        name="star-half"
+                        size={18}
+                        color="gold"
+                      />
+                    );
+                  } else {
+                    return (
+                      <Icon
+                        key={index}
+                        name="star-outline"
+                        size={18}
+                        color="gold"
+                      />
+                    );
+                  }
+                })}
+              </View>
             </View>
 
             <View style={style.addressContainer}>
@@ -458,7 +553,9 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
               </View>
               <View style={style.infoItem}>
                 <Icon name="schedule" size={18} color="gray" />
-                <Text style={style.timePosted}>49 phút trước</Text>
+                <Text style={style.timePosted}>
+                  {new Date(house.createdAt).toLocaleString("vi-VN")}
+                </Text>
               </View>
             </View>
           </View>
@@ -477,10 +574,9 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
               style={style.ownerAvatar}
             />
             <View style={style.ownerInfo}>
-              <Text style={style.ownerName}>{landlord.username}</Text>
-              <Text style={style.ownerStatus}>
-                <Icon name="circle" size={12} color="green" /> Đang hoạt động
-              </Text>
+              <Text style={style.ownerName}>Chủ nhà:</Text>
+              <Text style={style.ownerPhone}>{landlord.username}</Text>
+              <Text style={style.ownerName}>Số điện thoai:</Text>
               <View style={style.ownerContact}>
                 <Text style={style.ownerPhone}>{landlord.phone}</Text>
               </View>
@@ -491,15 +587,34 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
         <View style={style.separator}></View>
 
         {house && (
-          <View style={(style.amenitiesContainer, { paddingHorizontal: 20 })}>
+          <View style={[style.amenitiesContainer, { paddingHorizontal: 20 }]}>
             <Text style={style.amenitiesTitle}>Tiện ích</Text>
             <View style={style.amenitiesList}>
-              {house.amenities &&
-                Object.keys(house.amenities).map((key, index) => (
-                  <Text key={index} style={style.amenityItem}>
-                    {key}
-                  </Text>
-                ))}
+              {house.amenities && (
+                <>
+                  {house.amenities.hasWifi && (
+                    <Text style={style.amenityItem}>WiFi</Text>
+                  )}
+                  {house.amenities.hasParking && (
+                    <Text style={style.amenityItem}>Chỗ để xe</Text>
+                  )}
+                  {house.amenities.hasAirConditioner && (
+                    <Text style={style.amenityItem}>Máy lạnh</Text>
+                  )}
+                  {house.amenities.hasKitchen && (
+                    <Text style={style.amenityItem}>Bếp</Text>
+                  )}
+                  {house.amenities.hasElevator && (
+                    <Text style={style.amenityItem}>Thang máy</Text>
+                  )}
+                  {house.amenities.others &&
+                    house.amenities.others.map((amenity, index) => (
+                      <Text key={index} style={style.amenityItem}>
+                        {amenity}
+                      </Text>
+                    ))}
+                </>
+              )}
             </View>
           </View>
         )}
@@ -519,30 +634,44 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
 
         <View style={style.separator}></View>
 
-        <View style={style.commentSection}>
-          <TextInput
-            style={style.commentInput}
-            placeholder="Hãy nhập gì đó..."
-            value={comment}
-            onChangeText={setComment}
-          />
-          <TouchableOpacity
-            onPress={handleCommentSubmit}
-            style={style.submitBtn}
-          >
-            <Text style={style.submitBtnText}>Gửi</Text>
-          </TouchableOpacity>
+        <View style={styles.commentSection}>
+        {/* Star Rating Input */}
+        <View style={{ flexDirection: 'row', marginBottom: 10 }}>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <TouchableOpacity key={index} onPress={() => setRating(index + 1)}>
+              <Ionicons
+                name={index < rating ? "star" : "star-outline"}
+                size={24}
+                color="gold"
+              />
+            </TouchableOpacity>
+          ))}
         </View>
+        <TextInput
+          style={styles.commentInput}
+          placeholder="Hãy nhập gì đó..."
+          value={comment}
+          onChangeText={setComment}
+        />
+        <TouchableOpacity
+          onPress={handleCommentSubmit}
+          style={styles.submitBtn}
+        >
+          <Text style={styles.submitBtnText}>Gửi</Text>
+        </TouchableOpacity>
+      </View>
 
-        {comments.map((item) => (
-          <View key={item.id} style={style.commentItem}>
-            <Icon name="person" size={24} color={COLORS.grey} />
-            <View style={style.commentContent}>
-              <Text style={style.commentUser}>{item.user}</Text>
-              <Text style={style.commentText}>{item.text}</Text>
-            </View>
-          </View>
-        ))}
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#0000ff" />
+        ) : comments.length === 0 ? (
+          <Text style={{textAlign: 'center'}} >Chưa có bình luận nào.</Text>
+        ) : (
+          <FlatList
+            data={comments}
+            keyExtractor={(item) => item._id}
+            renderItem={renderComment}
+          />
+        )}
       </ScrollView>
 
       <View style={style.buttonContainer}>
@@ -687,6 +816,28 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  commentSection: {
+    flexDirection: 'column',
+    marginTop: 20,
+  },
+  commentInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    height: 60,
+    marginBottom: 10,
+  },
+  submitBtn: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  submitBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
   closeButton: {
     position: "absolute",
     top: 40,
@@ -872,7 +1023,7 @@ const style = StyleSheet.create({
   houseTitle: {
     fontSize: 30,
     fontWeight: "bold",
-    color: "red",
+    color: "Black",
     flexShrink: 1, // Thu nhỏ tiêu đề nếu không đủ không gian, nhưng vẫn giữ ngôi sao cùng hàng
   },
 
@@ -954,7 +1105,7 @@ const style = StyleSheet.create({
     marginLeft: 5,
   },
   amenityItem: {
-    backgroundColor: "blue",
+    backgroundColor: "black",
     padding: 5,
     borderRadius: 5,
     marginRight: 10,

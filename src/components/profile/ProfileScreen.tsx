@@ -9,13 +9,12 @@ import {
   TextInput,
   StatusBar,
   Alert,
+  Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import Feather from "@expo/vector-icons/Feather";
 import Entypo from "@expo/vector-icons/Entypo";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome } from "@expo/vector-icons";
@@ -112,25 +111,32 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
       if (!token || !user) {
         throw new Error("No token or user found");
       }
-
+  
       const formData = new FormData();
       formData.append("username", userName);
       formData.append("email", email);
       formData.append("phone", phone);
       formData.append("address", address);
-
+  
       if (selectImage) {
         const uriParts = selectImage.split(".");
-        const fileType = uriParts[uriParts.length - 1];
+        const fileType = uriParts[uriParts.length - 1].toLowerCase();
+        const mimeType =
+          fileType === "jpg" || fileType === "jpeg"
+            ? "image/jpeg"
+            : fileType === "png"
+            ? "image/png"
+            : "image/jpeg";
+  
         formData.append("avatar", {
-          uri: selectImage,
-          name: `avatar.${fileType}`,
-          type: `image/${fileType}`,
+          uri: Platform.OS === "android" ? selectImage : selectImage.replace("file://", ""),
+          name: `profile_${Date.now()}.${fileType}`,
+          type: mimeType,
         } as any);
       }
-
+  
       const response = await axios.put(
-        `https://be-android-project.onrender.com/api/auth/users/${user._id}`,
+        `http://192.168.100.123:5000/api/auth/users/${user._id}`,
         formData,
         {
           headers: {
@@ -139,7 +145,7 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
           },
         }
       );
-
+  
       if (response.status === 200) {
         Alert.alert("Success", "Thông tin của bạn đã được cập nhật thành công.");
         fetchUserProfile();
@@ -147,10 +153,10 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
         Alert.alert("Error", "Cập nhật thông tin thất bại.");
       }
     } catch (error: any) {
-      console.error("Update error:", error);
-      Alert.alert("Error", error.response?.data?.msg || "Cập nhật thất bại.");
+      console.error("Update error:", error.response.data);
     }
   };
+  
 
   const handleRegister = async () => {
     const id = user?._id;
@@ -358,7 +364,7 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={{
-              backgroundColor: "#3365a6",
+              backgroundColor: "#c91b1b",
               height: 44,
               borderRadius: 6,
               alignItems: "center",

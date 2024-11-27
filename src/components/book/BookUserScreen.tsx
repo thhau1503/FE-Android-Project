@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useCallback } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 import Icon from "react-native-vector-icons/FontAwesome";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 
 const BookUserScreen = ({ route, navigation }) => {
   const [bookings, setBookings] = useState([]);
@@ -110,9 +111,13 @@ const BookUserScreen = ({ route, navigation }) => {
     }
   }, [UserId]);
 
-  useEffect(() => {
-    fetchBookings();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      if (UserId) {
+        fetchBookings();
+      }
+    }, [UserId]) // Thêm UserId vào dependencies
+  );
 
   // Hàm xóa yêu cầu
   const deleteRequest = async (id) => {
