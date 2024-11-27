@@ -51,7 +51,7 @@ const ListCategory: React.FC<ListCategoryProps> = ({ setCategory }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Danh mục</Text>
       {loading ? (
-        <ActivityIndicator size="large" color="#e21f6d" />
+        <ActivityIndicator size="large" color="#0d0307" />
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {categories.map((category, index) => (
@@ -66,7 +66,7 @@ const ListCategory: React.FC<ListCategoryProps> = ({ setCategory }) => {
               <MaterialIcons
                 name={iconMapping[category] || iconMapping.Default}
                 size={24}
-                color={selectedCategory === category ? "#fff" : "#e21f6d"}
+                color={selectedCategory === category ? "#fff" : "#0e070a"}
               />
               <Text
                 style={[
@@ -98,16 +98,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     borderWidth: 1,
-    borderColor: "#e21f6d",
+    borderColor: "#0f0207",
     borderRadius: 20,
     marginRight: 10,
   },
   categorySelected: {
-    backgroundColor: "#e21f6d",
+    backgroundColor: "#050203",
   },
   categoryText: {
     marginLeft: 5,
-    color: "#e21f6d",
+    color: "#12050a",
   },
   categoryTextSelected: {
     color: "#fff",

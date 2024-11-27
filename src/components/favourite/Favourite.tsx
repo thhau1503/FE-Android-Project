@@ -59,7 +59,7 @@ const FavouriteScreen = ({ navigation }) => {
         navigation.navigate("login");
       }
     } catch (error) {
-      console.error("Lỗi khi lấy danh sách yêu thích:", error);
+      //console.error("Lỗi khi lấy danh sách yêu thích:", error.response.data);
     } finally {
       setLoading(false);
     }

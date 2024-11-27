@@ -10,6 +10,9 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  PermissionsAndroid,
+  Platform,
+  Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
@@ -40,6 +43,7 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const sortedTopPosts = topPosts.sort((a, b) => b.views - a.views);
   const [category, setCategory] = useState<string>(""); // Danh mục được chọn
   const [allPosts, setAllPosts] = useState([]); // Danh sách bài viết ban đầu
+  const [isSearching, setIsSearching] = useState(false);
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -185,6 +189,51 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
     getTopPosts(); // Gọi API để lấy các bài post có nhiều lượt xem nhất
   }, []);
 
+  const requestLocationPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: "Yêu cầu quyền vị trí",
+          message: "Ứng dụng cần quyền truy cập vị trí để tìm trọ gần bạn",
+          buttonPositive: "Đồng ý",
+        }
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const findNearbyRooms = async () => {
+    const hasPermission = await requestLocationPermission();
+
+    if (!hasPermission) {
+      Alert.alert("Thông báo", "Vui lòng cấp quyền truy cập vị trí");
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `https://be-android-project.onrender.com/api/post/nearby`,
+        {
+          params: {
+            lat: 10.8411434,
+            lon: 106.7759268,
+            maxDistance: 5000,
+          },
+        }
+      );
+      setPosts(response.data);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Lỗi", "Không thể tìm kiếm trọ gần đây");
+    }
+    (error) => {
+      Alert.alert("Lỗi", "Không thể lấy vị trí hiện tại");
+    };
+  };
+
   return (
     <>
       <StatusBar backgroundColor="#2d2da4" barStyle="light-content" />
@@ -248,6 +297,13 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
           </View>
 
           <ListCategory setCategory={setCategory} />
+          <TouchableOpacity
+            style={styles.nearbyButton}
+            onPress={findNearbyRooms}
+          >
+            <Ionicons name="location-sharp" size={20} color="black" />
+            <Text style={styles.nearbyButtonText}>Tìm trọ gần đây</Text>
+          </TouchableOpacity>
 
           <>
             <NoteAddMore title="Nhà ở tiểu biểu" typeSeeMore="product" />
@@ -339,63 +395,62 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
 
           <NoteAddMore title="Sản phẩm" typeSeeMore="product" />
           <View style={{ backgroundColor: "rgba(240, 240, 240,0.2)" }}>
-  {isLoading ? (
-    <Waiting />
-  ) : posts.length === 0 ? (
-    // Thêm thông báo khi không có bài viết nào
-    <Text style={{ textAlign: "center", marginVertical: 20 }}>
-      Không tìm thấy bài viết nào phù hợp.
-    </Text>
-  ) : (
-    <FlatList
-      data={posts} // Hiển thị danh sách bài viết được lọc
-      scrollEnabled={false}
-      keyExtractor={(item: any) => item._id.toString()}
-      renderItem={({ item }: any) => (
-        <View
-          style={{
-            marginBottom: 10,
-            width: "100%",
-            backgroundColor: "#fff",
-          }}
-        >
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate("detailItem", {
-                postId: item._id,
-              });
-            }}
-          >
-            <Image
-              style={{ width: "100%", height: 250 }}
-              source={{
-                uri:
-                  item.images && item.images.length > 0
-                    ? item.images[0].url
-                    : "https://example.com/default-image.jpg",
-              }}
-            />
-          </TouchableOpacity>
-          <View
-            style={{
-              flexDirection: "column",
-              justifyContent: "space-between",
-              padding: 10,
-            }}
-          >
-            <Text style={{ color: "black", paddingBottom: 15 }}>
-              {item.title}
-            </Text>
-            <Text style={{ color: "#e21f6d" }}>
-              đ{item.price.toLocaleString("vi-VN")} triệu/tháng
-            </Text>
+            {isLoading ? (
+              <Waiting />
+            ) : posts.length === 0 ? (
+              // Thêm thông báo khi không có bài viết nào
+              <Text style={{ textAlign: "center", marginVertical: 20 }}>
+                Không tìm thấy bài viết nào phù hợp.
+              </Text>
+            ) : (
+              <FlatList
+                data={posts} // Hiển thị danh sách bài viết được lọc
+                scrollEnabled={false}
+                keyExtractor={(item: any) => item._id.toString()}
+                renderItem={({ item }: any) => (
+                  <View
+                    style={{
+                      marginBottom: 10,
+                      width: "100%",
+                      backgroundColor: "#fff",
+                    }}
+                  >
+                    <TouchableOpacity
+                      onPress={() => {
+                        navigation.navigate("detailItem", {
+                          postId: item._id,
+                        });
+                      }}
+                    >
+                      <Image
+                        style={{ width: "100%", height: 250 }}
+                        source={{
+                          uri:
+                            item.images && item.images.length > 0
+                              ? item.images[0].url
+                              : "https://example.com/default-image.jpg",
+                        }}
+                      />
+                    </TouchableOpacity>
+                    <View
+                      style={{
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        padding: 10,
+                      }}
+                    >
+                      <Text style={{ color: "black", paddingBottom: 15 }}>
+                        {item.title}
+                      </Text>
+                      <Text style={{ color: "#e21f6d" }}>
+                        đ{item.price.toLocaleString("vi-VN")} triệu/tháng
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              />
+            )}
           </View>
-        </View>
-      )}
-    />
-  )}
-</View>
-
         </ScrollView>
       </View>
     </>
@@ -471,6 +526,20 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     fontSize: 14,
     color: "#000",
+  },
+  nearbyButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white",
+    padding: 10,
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginVertical: 8,
+  },
+  nearbyButtonText: {
+    color: "black",
+    marginLeft: 8,
+    fontWeight: "600",
   },
 });
 

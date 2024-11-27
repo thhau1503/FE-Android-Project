@@ -14,6 +14,41 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
 
+interface ListingType {
+  title: string;
+  description: string;
+  price: string;
+  location: {
+    address: string;
+    city: string;
+    district: string;
+    ward: string;
+    geoLocation: {
+      type: string;
+      coordinates: number[];
+    };
+  };
+  roomType: string;
+  size: string;
+  availability: boolean;
+  amenities: {
+    hasWifi: boolean;
+    hasParking: boolean;
+    hasAirConditioner: boolean;
+    hasKitchen: boolean;
+    hasElevator: boolean;
+  };
+  additionalCosts: {
+    electricity: string;
+    water: string;
+    internet: string;
+    cleaning: string;
+    security: string;
+  };
+  images: any[];
+  videos: any[];
+}
+
 const EditListingScreen = ({ route, navigation }) => {
   const { postId } = route.params;
   const [loading, setLoading] = useState(true);
@@ -46,6 +81,7 @@ const EditListingScreen = ({ route, navigation }) => {
   const [newImages, setNewImages] = useState([]);
   const [videos, setVideos] = useState([]);
   const [newVideos, setNewVideos] = useState([]);
+  const [oldData  , setOldData] = useState<ListingType | null>(null);
 
   useEffect(() => {
     fetchListingDetails();
@@ -57,7 +93,8 @@ const EditListingScreen = ({ route, navigation }) => {
         `https://be-android-project.onrender.com/api/post/${postId}`
       );
       const data = response.data;
-
+      setOldData(data);
+      console.log("Listing details:", data);
       setTitle(data.title);
       setDescription(data.description);
       setPrice(data.price.toString());
@@ -125,6 +162,7 @@ const EditListingScreen = ({ route, navigation }) => {
         city,
         district,
         ward,
+        geoLocation: oldData.location.geoLocation
       })
     );
     formData.append("roomType", roomType);
@@ -168,7 +206,7 @@ const EditListingScreen = ({ route, navigation }) => {
         Alert.alert("Thất bại", `Lỗi: ${response.data.message}`);
       }
     } catch (error) {
-      console.error("Update error:", error);
+      console.log("Update error:", error.response.data);
       Alert.alert("Thất bại", "Không thể cập nhật bài viết.");
     }
   };

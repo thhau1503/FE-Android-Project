@@ -13,10 +13,16 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
+  Modal,
+  Linking,
+  Platform,
 } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import axios from "axios";
 import { Video, ResizeMode } from "expo-av";
+import MapView, { Marker } from "react-native-maps";
 
 const { width } = Dimensions.get("screen");
 
@@ -50,6 +56,13 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
   const [userId, setUserId] = useState<string>(""); // Lưu trữ userId
   const [viewMode, setViewMode] = useState("images"); // 'images' hoặc 'video'
   const [isVideoSelected, setIsVideoSelected] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [description, setDescription] = useState("");
+  const [user, setUser] = useState(null);
+  const [lat, setLat] = useState(10.8452589);
+  const [long, setLong] = useState(106.7941692);
+  const [mapModalVisible, setMapModalVisible] = useState(false);
 
   const [comments, setComments] = useState([
     {
@@ -59,7 +72,31 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
     },
     { id: "2", user: "Người dùng B", text: "Giá tốt, gần trường học." },
   ]);
-  // Hàm thêm comment vào danh sách
+
+  const handleReportSubmit = async () => {
+    try {
+      const response = await axios.post(
+        "https://be-android-project.onrender.com/api/report/create",
+        {
+          id_user: userId,
+          id_post: house?._id,
+          report_reason: reportReason,
+          description: description,
+        }
+      );
+
+      if (response.status === 200) {
+        Alert.alert("Thành công", "Đã gửi báo cáo tới người quản trị");
+        setModalVisible(false);
+      } else {
+        Alert.alert("Error", "Failed to submit report.");
+      }
+    } catch (error) {
+      console.error("Report error:", error);
+      Alert.alert("Error", "Failed to submit report.");
+    }
+  };
+
   const handleCommentSubmit = () => {
     if (comment.trim()) {
       const newComment = {
@@ -86,7 +123,12 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
             },
           }
         );
+        console.log("Dữ liệu API trả về:", userResponse.data);
+
         setUserId(userResponse.data._id);
+        setUser(userResponse.data);
+
+        console.log("Giá trị user sau khi set:", user.username);
 
         // Gọi API để kiểm tra bài viết đã được thêm vào mục yêu thích chưa
         const response = await axios.get(
@@ -98,16 +140,10 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           }
         );
         const favoritePosts = response.data;
-        console.log(favoritePosts);
         const isFav = favoritePosts.some((fav) => fav.id_post._id === postId);
         setIsFavorite(isFav);
       }
-    } catch (error) {
-      console.error(
-        "Lỗi khi lấy thông tin người dùng hoặc kiểm tra mục yêu thích:",
-        error
-      );
-    }
+    } catch (error) {}
   };
   const fetchUserId = async () => {
     try {
@@ -200,7 +236,6 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
       console.error("Lỗi khi xóa khỏi mục yêu thích:", error);
     }
   };
-
   // Hàm xử lý khi nhấn vào biểu tượng trái tim
   const handleFavoritePress = () => {
     if (isFavorite) {
@@ -217,18 +252,17 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
           `https://be-android-project.onrender.com/api/post/${postId}`
         );
         setHouse(response.data);
-        console.log(house);
-        // Gọi hàm lấy thông tin người dùng và kiểm tra yêu thích
         await fetchUserInfo();
 
-        // Gọi API để lấy thông tin người cho thuê từ landlord ID
+        //setLat(response.data.location?.geoLocation?.coordinates[1]);
+        //setLong(response.data.location?.geoLocation?.coordinates[0]);
+
         const landlordId = response.data.landlord._id;
         if (landlordId) {
           const landlordResponse = await axios.get(
             `https://be-android-project.onrender.com/api/auth/user/${landlordId}`
           );
           setLandlord(landlordResponse.data);
-          console.log(landlordResponse.data);
         }
 
         setLoading(false);
@@ -257,6 +291,42 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
     );
   }
 
+  const openMap = () => {
+    navigation.navigate('MapScreen');
+  }
+
+  const openZalo = async (phoneNumber) => {
+    try {
+      const formattedPhone = phoneNumber.replace(/\D/g, "");
+      const url = `https://zalo.me/${formattedPhone}`;
+      const supported = await Linking.canOpenURL(url);
+
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert(
+          "Không thể mở Zalo",
+          "Bạn có muốn gọi điện thoại trực tiếp không?",
+          [
+            {
+              text: "Hủy",
+              style: "cancel",
+            },
+            {
+              text: "Gọi",
+              onPress: () => Linking.openURL(`tel:${phoneNumber}`),
+            },
+          ]
+        );
+      }
+    } catch (error) {
+      console.error("Error opening Zalo:", error);
+      Alert.alert("Lỗi", "Không thể mở Zalo");
+    }
+  };
+
+
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -283,18 +353,19 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
                   </View>
                 )}
               />
-            ) : house.video ? (
+            ) : house.videos ? (
               <Video
-                source={{ uri: house.video.url }}
+                source={{ uri: house.videos[0].url }}
                 style={{
                   height: 320,
                   width: 320,
                   borderRadius: 10,
                 }}
                 useNativeControls
-                resizeMode={"contain" as ResizeMode} // Cast 'contain' as ResizeMode
+                resizeMode={"contain" as ResizeMode}
+                shouldPlay
                 onError={(error) =>
-                  console.error("Error Loading Video: ", error)
+                  console.log("Video Playback Error: ", error)
                 }
                 onPlaybackStatusUpdate={(status) =>
                   console.log("Playback Status: ", status)
@@ -331,10 +402,10 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
                 size={27}
                 color={viewMode === "video" ? COLORS.blue : COLORS.grey}
               />
-              <Text style={style.iconText}>Video</Text>
+              <Text style={style.iconText}>{house.videos.length} Video</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={style.iconItem}>
+            <TouchableOpacity style={style.iconItem} onPress={openMap}>
               <Icon name="map" size={27} color={COLORS.dark} />
               <Text style={style.iconText}>Bản đồ</Text>
             </TouchableOpacity>
@@ -412,7 +483,6 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
               </Text>
               <View style={style.ownerContact}>
                 <Text style={style.ownerPhone}>{landlord.phone}</Text>
-                <Text style={style.ownerZalo}>Nhắn Zalo</Text>
               </View>
             </View>
           </View>
@@ -489,19 +559,258 @@ const Detail: React.FC<RentalHomeDetailProps> = ({ navigation, route }) => {
             });
           }}
         >
-          <Text style={{ color: COLORS.white }}>Đặt Phòng</Text>
+          <Text style={{ color: COLORS.white }}>Đặt lịch hẹn</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={style.circleButton}>
+        <TouchableOpacity
+          style={style.circleButton}
+          onPress={() => openZalo(house.landlord.phone)}
+        >
           <Icon name="message" size={20} color={COLORS.dark} />
         </TouchableOpacity>
-        <TouchableOpacity style={style.circleButton}>
-          <Icon name="phone" size={20} color={COLORS.dark} />
+        <TouchableOpacity
+          style={style.circleButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <Icon name="report" size={20} color={COLORS.dark} />
         </TouchableOpacity>
       </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Báo cáo bài viết</Text>
+            <Text
+              style={{
+                fontSize: 12,
+                color: "#000",
+                marginVertical: 5,
+                alignSelf: "flex-start", // Thêm dòng này
+              }}
+            >
+              Nguyên nhân báo cáo
+            </Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={reportReason}
+                style={styles.picker}
+                onValueChange={(itemValue) => setReportReason(itemValue)}
+              >
+                <Picker.Item label="Lý do report" value="" />
+                <Picker.Item label="Có dấu hiệu lừa đảo" value="Fraud" />
+                <Picker.Item label="Spam" value="Spam" />
+                <Picker.Item
+                  label="Thông tin sai sự thật"
+                  value="Inappropriate Content"
+                />
+                <Picker.Item label="Khác" value="Other" />
+              </Picker>
+            </View>
+            <Text
+              style={{
+                fontSize: 12,
+                color: "#000",
+                marginVertical: 5,
+                alignSelf: "flex-start", // Thêm dòng này
+              }}
+            >
+              Mô tả chi tiết
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Description"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+            />
+            <Text
+              style={{
+                fontSize: 12,
+                color: "#000",
+                marginVertical: 5,
+                alignSelf: "flex-start", // Thêm dòng này
+              }}
+            >
+              Tên người báo cáo
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Name"
+              value={user.username}
+              multiline
+              editable={false}
+              pointerEvents="none"
+            />
+            <Text
+              style={{
+                fontSize: 12,
+                color: "#000",
+                marginVertical: 5,
+                alignSelf: "flex-start", // Thêm dòng này
+              }}
+            >
+              Số điện thoại
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Phone"
+              value={user.phone}
+              multiline
+              editable={false}
+              pointerEvents="none"
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonClose]}
+                onPress={() => setModalVisible(!modalVisible)}
+              >
+                <Text style={styles.textStyle}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonSubmit]}
+                onPress={handleReportSubmit}
+              >
+                <Text style={styles.textStyle}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  closeButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 1,
+    backgroundColor: "white",
+    padding: 8,
+    borderRadius: 20,
+    elevation: 5,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.light,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: COLORS.light,
+  },
+  bookNowBtn: {
+    flex: 1,
+    backgroundColor: "black",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+  },
+  bookNowText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  circleButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.white,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    marginLeft: 8,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalView: {
+    width: "80%",
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  pickerContainer: {
+    width: "100%",
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  picker: {
+    width: "100%",
+    height: 40,
+  },
+  mapContainer: {
+    height: 200,
+    marginVertical: 10,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  map: {
+    flex: 1,
+  },
+  input: {
+    width: "100%",
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonClose: {
+    backgroundColor: "#f44336",
+  },
+  buttonSubmit: {
+    backgroundColor: "#2196F3",
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+});
 
 const style = StyleSheet.create({
   backgroundImageContainer: {
@@ -676,27 +985,38 @@ const style = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
-    marginLeft: 10,
     alignItems: "center",
+    padding: 16,
+    backgroundColor: COLORS.light,
   },
   bookNowBtn: {
-    height: 50,
-    justifyContent: "center",
+    flex: 1,
+    backgroundColor: "black",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     alignItems: "center",
-    backgroundColor: "green",
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    width: width * 0.5,
+    justifyContent: "center",
+    marginRight: 8,
+  },
+  bookNowText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: "bold",
   },
   circleButton: {
-    height: 50,
-    width: 50,
-    borderRadius: 25,
-    justifyContent: "center",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.white,
     alignItems: "center",
-    backgroundColor: "light",
-    marginHorizontal: 25, // Mỗi nút cách nhau 5px từ hai bên, tổng cộng 10px
+    justifyContent: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    marginLeft: 8,
   },
 
   iconContainer: {

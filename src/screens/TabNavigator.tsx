@@ -43,9 +43,9 @@ const optionScreen = ({ route }: any) => ({
     return <Ionicons name={iconName} size={size} color={color} />;
   },
   tabBarActiveTintColor: "black",
-  tabBarInactiveTintColor: "tomato",
+  tabBarInactiveTintColor: "black",
   headerShown: false,
-  tabBarStyle: { backgroundColor: "#1bcdff" },
+  tabBarStyle: { backgroundColor: "#f5f2f0" },
   tabBarLabelStyle: { color: "black", fontweight: "bold" },
 });
 

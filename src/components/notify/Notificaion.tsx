@@ -76,7 +76,7 @@ const NotificationScreen: React.FC = ({ navigation }: any) => {
       <TouchableOpacity style={styles.notificationItem}>
         <Image
           source={{
-            uri: "https://cdn-icons-png.flaticon.com/512/3159/3159090.png",
+            uri: "https://developer.apple.com/news/images/og/notifications-og.jpg",
           }}
           style={styles.icon}
         />
