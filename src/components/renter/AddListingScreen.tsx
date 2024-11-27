@@ -151,28 +151,44 @@ const AddListingScreen = () => {
         electricity: electricityCost,
         water: waterCost,
         internet: internetCost,
-        cleaning: cleaningCost,
+        cleaningService: cleaningCost,
         security: securityCost,
       })
     );
   
     // Xử lý hình ảnh
-    for (const image of images) {
-      const response = await fetch(image.uri);
-      const blob = await response.blob();
-      formData.append("images", blob, image.name);
+    for (let i = 0; i < images.length; i++) {
+      const localUri = images[i].uri;
+      const filename = localUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename || '');
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+  
+      formData.append('images', {
+        uri: localUri,
+        name: filename,
+        type
+      } as any);
     }
   
-    // Xử lý video
-    for (const video of videos) {
-      const response = await fetch(video.uri);
-      const blob = await response.blob();
-      formData.append("videos", blob, video.name);
+    // Append videos
+    for (let i = 0; i < videos.length; i++) {
+      const localUri = videos[i].uri;
+      const filename = localUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename || '');
+      const type = match ? `video/${match[1]}` : 'video/mp4';
+  
+      formData.append('videos', {
+        uri: localUri,
+        name: filename,
+        type
+      } as any);
     }
+
+    console.log("formData", formData);
   
     try {
       const response = await fetch(
-        "https://be-android-project.onrender.com/api/post/create",
+        "http://192.168.250.37:5000/api/post/create",
         {
           method: "POST",
           headers: {
@@ -215,7 +231,7 @@ const AddListingScreen = () => {
         Alert.alert("Thất bại", `Lỗi: ${errorText}`);
       }
     } catch (error) {
-      console.error("Network Error:", error);
+      console.error("Network Error:", error.response.data);
       Alert.alert("Thất bại", "Đã xảy ra lỗi khi gọi API.");
     }
   };

@@ -23,6 +23,7 @@ import VerifyOTPScreen from "./src/components/login/VerifyOTPScreen";
 import BookingScreen from "./src/components/book/BookingScreen";
 import EditListingScreen from "./src/components/renter/EditListingScreen";
 import FilterScreen from "./src/components/home/FilterScreen";
+import MapScreen from "./src/components/detail/Map";
 const Stack = createStackNavigator();
 
 const App: React.FC = () => {
@@ -101,6 +102,8 @@ const App: React.FC = () => {
         {/* Auth Screens */}
         <Stack.Screen name="login" component={LoginScreen} />
         <Stack.Screen name="register" component={RegisterScreen} />
+
+        <Stack.Screen name="MapScreen" component={MapScreen} />
 
         <Stack.Screen
           name="otpVerification"

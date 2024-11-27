@@ -422,20 +422,33 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 14,
+<<<<<<< HEAD
     color: "#000", // Màu nổi bật
+=======
+    color: "#0b0206", // Màu nổi bật
+>>>>>>> 65f39e1516be179debb9e5bb334aa6a186b5876f
     fontWeight: "bold",
     textAlign: "center",
     paddingVertical: 5, // Khoảng cách trên/dưới
     paddingHorizontal: 10, // Khoảng cách trái/phải
     borderWidth: 1, // Đường viền
+<<<<<<< HEAD
     borderColor: "#000",
+=======
+    borderColor: "#060204",
+>>>>>>> 65f39e1516be179debb9e5bb334aa6a186b5876f
     borderRadius: 15, // Bo góc
     marginTop: 8, // Khoảng cách với nội dung trên
     alignSelf: "flex-start", // Căn trái
   },
   optionSelected: {
+<<<<<<< HEAD
     backgroundColor: "#000",
     borderColor: "#000",
+=======
+    backgroundColor: "#080305",
+    borderColor: "#090406",
+>>>>>>> 65f39e1516be179debb9e5bb334aa6a186b5876f
   },
   optionText: {
     fontSize: 14,
@@ -445,7 +458,11 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   applyButton: {
+<<<<<<< HEAD
     backgroundColor: "#000",
+=======
+    backgroundColor: "#090305",
+>>>>>>> 65f39e1516be179debb9e5bb334aa6a186b5876f
     padding: 15,
     borderRadius: 30,
     alignItems: "center",

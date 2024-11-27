@@ -61,7 +61,11 @@ const ListCategory: React.FC<ListCategoryProps> = ({ setCategory }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Danh mục</Text>
       {loading ? (
+<<<<<<< HEAD
         <ActivityIndicator size="large" color="#000" />
+=======
+        <ActivityIndicator size="large" color="#0d0307" />
+>>>>>>> 65f39e1516be179debb9e5bb334aa6a186b5876f
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {categories.map((category, index) => (
@@ -76,7 +80,11 @@ const ListCategory: React.FC<ListCategoryProps> = ({ setCategory }) => {
               <MaterialIcons
                 name={iconMapping[category] || iconMapping.Default}
                 size={24}
+<<<<<<< HEAD
                 color={selectedCategory === category ? "#fff" : "#000"}
+=======
+                color={selectedCategory === category ? "#fff" : "#0e070a"}
+>>>>>>> 65f39e1516be179debb9e5bb334aa6a186b5876f
               />
               <Text
                 style={[
@@ -109,17 +117,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     borderWidth: 1,
+<<<<<<< HEAD
     borderColor: "#000", // Viền màu đen
+=======
+    borderColor: "#0f0207",
+>>>>>>> 65f39e1516be179debb9e5bb334aa6a186b5876f
     borderRadius: 20,
     marginRight: 10,
     backgroundColor: "#fff", // Nền màu trắng
   },
   categorySelected: {
+<<<<<<< HEAD
     backgroundColor: "#000", // Nền màu đen khi được chọn
   },
   categoryText: {
     marginLeft: 5,
     color: "#000", // Văn bản màu đen
+=======
+    backgroundColor: "#050203",
+  },
+  categoryText: {
+    marginLeft: 5,
+    color: "#12050a",
+>>>>>>> 65f39e1516be179debb9e5bb334aa6a186b5876f
   },
   categoryTextSelected: {
     color: "#fff", // Văn bản màu trắng khi được chọn

@@ -68,7 +68,7 @@ const ManageBookingScreen = () => {
               postTitle = postResponse.data.title || "Không xác định";
             }
           } catch (error) {
-            console.error("Error fetching post:", error.message);
+            console.error("Error fetching post:", error.response.data);
           }
   
           try {

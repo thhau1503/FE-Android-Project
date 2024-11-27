@@ -27,6 +27,9 @@ interface User {
   user_role: string;
   phone: string;
   address: string;
+  avatar: {
+    url: string;
+  };
 }
 
 const ProfileScreen: React.FC = ({ navigation }: any) => {
@@ -39,13 +42,14 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
   const [userRole, setUserRole] = useState("");
   const [selectImage, setSelectImage] = useState<string | null>(null);
 
-  // Lấy chữ cái đầu tiên từ tên người dùng
   const getInitials = (name: string) => {
     return name ? name.charAt(0).toUpperCase() : "U";
   };
+
   useEffect(() => {
     fetchUserProfile();
   }, []);
+
   const fetchUserProfile = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -59,6 +63,7 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
           }
         );
         setUser(response.data);
+        setSelectImage(response.data.avatar.url);
       } else {
         navigation.navigate("login");
       }
@@ -73,6 +78,7 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     if (user) {
       setUserName(user.username || "");
@@ -107,28 +113,35 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
         throw new Error("No token or user found");
       }
 
-      const updatedData = {
-        username: userName,
-        email: email,
-        phone: phone,
-        address: address,
-      };
+      const formData = new FormData();
+      formData.append("username", userName);
+      formData.append("email", email);
+      formData.append("phone", phone);
+      formData.append("address", address);
+
+      if (selectImage) {
+        const uriParts = selectImage.split(".");
+        const fileType = uriParts[uriParts.length - 1];
+        formData.append("avatar", {
+          uri: selectImage,
+          name: `avatar.${fileType}`,
+          type: `image/${fileType}`,
+        } as any);
+      }
 
       const response = await axios.put(
-        `https://be-android-project.onrender.com/api/auth/update/${user.id}`,
-        updatedData,
+        `https://be-android-project.onrender.com/api/auth/users/${user._id}`,
+        formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
 
       if (response.status === 200) {
-        Alert.alert(
-          "Success",
-          "Thông tin của bạn đã được cập nhật thành công."
-        );
+        Alert.alert("Success", "Thông tin của bạn đã được cập nhật thành công.");
         fetchUserProfile();
       } else {
         Alert.alert("Error", "Cập nhật thông tin thất bại.");
@@ -140,7 +153,33 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
   };
 
   const handleRegister = async () => {
-    navigation.navigate("register");
+    const id = user?._id;
+    try {
+      const response = await fetch(`https://be-android-project.onrender.com/api/auth/update-role-to-renter/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update role');
+      }
+      const data = await response.json();
+      console.log('Role updated successfully:', data);
+      Alert.alert(
+        'Đăng ký thành công',
+        'Đăng ký thành người cho thuê thành công. Vui lòng đăng nhập lại để chuyển đến trang quản l',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('login'),
+          },
+        ],
+        { cancelable: false }
+      );
+    } catch (error) {
+      console.error('Error updating role:', error);
+    }
   };
 
   return (
@@ -150,7 +189,7 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
         <View style={{ width: "100%" }}>
           <Image
             source={{
-              uri: "https://storage.googleapis.com/digital-platform/hinh_anh_Can_ho_mau_Vinhomes_Smart_City_nhin_la_muon_o_ngay_so_3_4ee32c4231/hinh_anh_Can_ho_mau_Vinhomes_Smart_City_nhin_la_muon_o_ngay_so_3_4ee32c4231.jpg",
+              uri: selectImage,
             }}
             resizeMode="cover"
             style={{ height: 228, width: "100%" }}
@@ -161,10 +200,10 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
             <Image
               source={{
                 uri: selectImage
-                  ? selectImage // Nếu người dùng có ảnh đại diện, hiển thị ảnh đó
+                  ? selectImage
                   : `https://ui-avatars.com/api/?name=${getInitials(
                       userName
-                    )}&background=random&color=fff&size=256`, // Nếu không có, hiển thị avatar từ tên
+                    )}&background=random&color=fff&size=256`,
               }}
               style={{
                 height: 170,
@@ -243,7 +282,6 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
               <FontAwesome name="phone" size={24} color="black" />
               <Text style={{ fontSize: 15, fontWeight: "bold" }}> Phone </Text>
             </View>
-
             <View
               style={{
                 height: 44,
@@ -301,7 +339,7 @@ const ProfileScreen: React.FC = ({ navigation }: any) => {
               justifyContent: "center",
             }}
           >
-            <Text style={{ color: "#f8f8f4", fontSize: 16 }}>Register</Text>
+            <Text style={{ color: "#f8f8f4", fontSize: 16 }}>Register renter</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {

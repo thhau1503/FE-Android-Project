@@ -110,6 +110,10 @@ const BookUserScreen = ({ route, navigation }) => {
     }
   }, [UserId]);
 
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
   // Hàm xóa yêu cầu
   const deleteRequest = async (id) => {
     try {
