@@ -188,7 +188,7 @@ const AddListingScreen = () => {
   
     try {
       const response = await fetch(
-        "http://192.168.250.37:5000/api/post/create",
+        "https://be-android-project.onrender.com/api/post/create",
         {
           method: "POST",
           headers: {
