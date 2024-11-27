@@ -356,12 +356,13 @@ const AddListingScreen = () => {
         onChangeText={setSecurityCost}
       />
 
-      <Text style={styles.label}>Hình ảnh</Text>
+      {/* <Text style={styles.label}>Hình ảnh</Text> */}
       <TouchableOpacity
         style={styles.imagePickerButton}
         onPress={() => pickMedia(ImagePicker.MediaTypeOptions.Images)}
       >
-        <Text style={styles.imagePickerText}>Chọn hình ảnh</Text>
+       <Text style={{ fontSize: 16, color: "#007BFF", fontWeight: "bold" }}>Chọn hình ảnh</Text>
+
       </TouchableOpacity>
       {images.map((image, index) => (
         <View key={index} style={styles.imagePreview}>
@@ -372,12 +373,12 @@ const AddListingScreen = () => {
         </View>
       ))}
 
-      <Text style={styles.label}>Video</Text>
+      {/* <Text style={styles.label}>Video</Text> */}
       <TouchableOpacity
         style={styles.imagePickerButton}
         onPress={() => pickMedia(ImagePicker.MediaTypeOptions.Videos)}
       >
-        <Text style={styles.imagePickerText}>Chọn Video</Text>
+        <Text style={{ fontSize: 16, color: "#007BFF", fontWeight: "bold" }}>Chọn Video</Text>
       </TouchableOpacity>
       {videos.map((video, index) => (
         <View key={index} style={styles.imagePreview}>

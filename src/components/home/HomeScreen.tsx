@@ -76,23 +76,29 @@ const HomeScreen: React.FC = ({ navigation }: any) => {
   const fetchPostsByCategory = async (selectedCategory: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.get(
-        `https://be-android-project.onrender.com/api/post/room-type/${selectedCategory}`
-      );
-      setPosts(response.data); // Cập nhật danh sách bài đăng
+      if (selectedCategory === "All") {
+        // Nếu danh mục là "Tất Cả", hiển thị tất cả bài viết
+        setPosts(allPosts);
+      } else {
+        const response = await axios.get(
+          `https://be-android-project.onrender.com/api/post/room-type/${selectedCategory}`
+        );
+        setPosts(response.data); // Cập nhật danh sách bài đăng
+      }
     } catch (error) {
       console.error("Error fetching posts by category:", error);
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   // Khi `category` thay đổi, gọi API lấy bài đăng theo danh mục
   useEffect(() => {
     if (category) {
       fetchPostsByCategory(category);
     }
   }, [category]);
+  
   const getApi = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
